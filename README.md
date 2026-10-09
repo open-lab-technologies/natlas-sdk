@@ -85,6 +85,16 @@ This uses the official N-ATLAS speech models (`NCAIR1/Yoruba-ASR`, `Igbo-ASR`,
 each model page on Hugging Face, then run `hf auth login`. Any format ffmpeg can
 decode works, including WhatsApp voice notes.
 
+## Playground
+
+A browser playground for trying prompts, translation and voice input, and for
+reading benchmark results reply by reply:
+
+```bash
+pip install "natlas[playground] @ git+https://github.com/Nazehs/natlas-sdk"
+streamlit run playground/app.py
+```
+
 ## Command line
 
 | Command | What it does |
