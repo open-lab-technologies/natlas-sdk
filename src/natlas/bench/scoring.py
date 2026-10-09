@@ -47,3 +47,36 @@ def chrf(hypotheses: list[str], references: list[str]) -> float:
     from sacrebleu.metrics import CHRF
 
     return CHRF(word_order=2).corpus_score(hypotheses, [references]).score
+
+
+def normalise_transcript(text: str) -> str:
+    """Lowercase and drop punctuation, keeping tone marks: in Yoruba and Igbo they
+    change the word, so a missing diacritic is a real recognition error."""
+    import unicodedata
+
+    text = unicodedata.normalize("NFC", text.lower())
+    text = "".join(ch if ch.isalnum() or ch.isspace() or ch == "'" or
+                   unicodedata.category(ch) == "Mn" else " " for ch in text)
+    return " ".join(text.split())
+
+
+def strip_tone_marks(text: str) -> str:
+    import unicodedata
+
+    decomposed = unicodedata.normalize("NFD", text)
+    return "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
+
+
+def wer(hypotheses: list[str], references: list[str], ignore_tones: bool = False) -> float:
+    """Corpus word error rate as a fraction, after `normalise_transcript`.
+
+    `ignore_tones` also strips diacritics from both sides. Use it alongside the strict
+    score when references are inconsistently toned, as FLEURS Yoruba is.
+    """
+    import jiwer
+
+    def prep(text: str) -> str:
+        text = normalise_transcript(text)
+        return strip_tone_marks(text) if ignore_tones else text
+
+    return jiwer.wer([prep(r) for r in references], [prep(h) for h in hypotheses])

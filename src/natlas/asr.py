@@ -49,9 +49,34 @@ class SpeechRecogniser:
         audio = self.load_audio(data)
         with self._lock:
             pipe = self._pipeline(code)
-            result = pipe(
-                {"raw": audio, "sampling_rate": SAMPLE_RATE},
-                chunk_length_s=30,
-                return_timestamps=False,
-            )
+            text = self._run(pipe, audio, {})
+            if looks_looped(text):
+                # The speech models, Igbo especially, sometimes fall into a loop
+                # ("onye onye onye ...") that turns one sentence into hundreds of words.
+                # Banning repeated 4-grams stops it. It is only applied on a retry
+                # because it also blocks genuine repeats and costs accuracy elsewhere.
+                text = self._run(pipe, audio, {"no_repeat_ngram_size": 4})
+        return text
+
+    @staticmethod
+    def _run(pipe, audio, generate_kwargs: dict) -> str:
+        result = pipe(
+            {"raw": audio, "sampling_rate": SAMPLE_RATE},
+            chunk_length_s=30,
+            return_timestamps=False,
+            generate_kwargs=generate_kwargs,
+        )
         return result["text"].strip()
+
+
+def looks_looped(text: str, max_repeats: int = 3, max_n: int = 4) -> bool:
+    """True if any 1- to `max_n`-word phrase repeats back to back more than `max_repeats` times."""
+    words = text.split()
+    for n in range(1, max_n + 1):
+        for i in range(len(words) - n):
+            phrase, repeats = words[i:i + n], 1
+            while words[i + repeats * n:i + (repeats + 1) * n] == phrase:
+                repeats += 1
+                if repeats > max_repeats:
+                    return True
+    return False

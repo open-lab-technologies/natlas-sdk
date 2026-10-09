@@ -77,8 +77,12 @@ natlas transcribe voice-note.ogg --language yo
 ```
 
 ```python
-text = client.transcribe("voice-note.ogg", language="hausa")
+heard = client.transcribe("voice-note.ogg", language="ha")
+answer = client.chat(heard)
 ```
+
+On an Apple Silicon laptop a WhatsApp voice note takes about a second to
+transcribe once the model is loaded, and about a second more for the answer.
 
 This uses the official N-ATLAS speech models (`NCAIR1/Yoruba-ASR`, `Igbo-ASR`,
 `Hausa-ASR`, `NigerianAccentedEnglish`). They are gated: accept the terms on
@@ -128,6 +132,7 @@ against a remote or hosted N-ATLAS endpoint as well as a local one.
 | `afrixnli` | IrokoBench AfriXNLI | Reasoning about sentence meaning | en, ha, ig, yo |
 | `afrimgsm` | IrokoBench AfriMGSM | Grade-school maths | en, ha, ig, yo |
 | `mt-en-xx`, `mt-xx-en` | MAFAND-MT news | Translation (chrF++) | ha, ig, yo |
+| `asr-fleurs` | FLEURS read speech | Speech to text (word error rate) | en, ha, ig, yo |
 
 Items are a seeded random sample, so runs with the same `-n` and `--seed`
 are comparable. Results go to `--out`: a `summary.md` table, `summary.json`,
@@ -162,6 +167,24 @@ How to read this:
   confidence. Differences smaller than that between languages are not meaningful.
 - These are 4-bit numbers. The full-precision model may score higher; run
   `natlas bench` against a vLLM endpoint serving the official weights to compare.
+
+### Results: N-ATLAS speech models on FLEURS
+
+First 50 clips of the FLEURS dev split per language, through `natlas serve --asr`.
+Word error rate, so lower is better.
+
+| | English | Hausa | Igbo | Yoruba |
+|---|---:|---:|---:|---:|
+| WER % | 9.0 | 31.3 | 43.8 | 55.7 |
+| WER % ignoring tone marks | 9.0 | 31.3 | 37.3 | 28.8 |
+
+- Many FLEURS Yoruba references are written without tone marks ("Awon iroyin")
+  while the model writes them ("àwọn ìròyìn"), so the strict Yoruba score
+  overstates the error. The second row strips diacritics from both sides.
+- FLEURS has no Nigerian-accented English; English is scored on US speakers.
+- The Igbo model sometimes loops on one word ("onye onye onye ..."). The SDK
+  detects that and re-decodes with repeated phrases banned, which took Igbo WER
+  from 65.7% to 43.8% without changing the other languages.
 
 Reproduce with:
 

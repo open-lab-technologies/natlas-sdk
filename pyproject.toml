@@ -29,6 +29,7 @@ playground = [
 ]
 bench = [
     "sacrebleu>=2.4",
+    "jiwer>=3.0",
 ]
 dev = [
     "pytest>=8",

@@ -20,9 +20,10 @@ class Task:
     languages: tuple[str, ...]
     load: Callable[[str], list[data.Item]]
     max_tokens: int
-    metric: str  # "accuracy" or "chrf"
+    metric: str  # "accuracy", "chrf" or "wer"
     parse: Callable[[str], str | None] | None = None
     chance: float | None = None  # score from guessing, to read results against
+    audio: bool = False  # items carry an audio file to transcribe instead of a prompt
 
 
 TASKS: dict[str, Task] = {
@@ -36,6 +37,8 @@ TASKS: dict[str, Task] = {
                      "chrf"),
     "mt-xx-en": Task("mt-xx-en", ("ha", "ig", "yo"), lambda l: data.mafand(l, "xx-en"), 256,
                      "chrf"),
+    "asr-fleurs": Task("asr-fleurs", ("en", "ha", "ig", "yo"), data.fleurs, 0, "wer",
+                       audio=True),
 }
 
 
@@ -68,14 +71,22 @@ def run(
         for lang in task.languages:
             if languages and lang not in languages:
                 continue
-            items = data.sample(task.load(lang), n, seed)
+            if task.audio:
+                # FLEURS clips are streamed from the start of the archive, so take the
+                # first n rather than a random sample of the whole split.
+                items = task.load(lang, n or 50)
+            else:
+                items = data.sample(task.load(lang), n, seed)
             rows, hyps, refs = [], [], []
             failures = 0
             t0 = time.time()
             for k, item in enumerate(items, 1):
                 try:
-                    reply = client.chat(item.prompt, temperature=0.0,
-                                        max_tokens=task.max_tokens).text
+                    if task.audio:
+                        reply = client.transcribe(item.meta["audio"], language=lang)
+                    else:
+                        reply = client.chat(item.prompt, temperature=0.0,
+                                            max_tokens=task.max_tokens).text
                 except NAtlasError as e:
                     reply, failures = "", failures + 1
                     print(f"\n{item.id}: {e}", file=sys.stderr)
@@ -84,6 +95,11 @@ def run(
                     row["gold"] = item.gold
                     row["parsed"] = task.parse(reply)
                     row["correct"] = _correct(task, row["parsed"], item.gold)
+                elif task.metric == "wer":
+                    row["gold"] = item.gold
+                    row["wer"] = round(100 * scoring.wer([reply], [item.gold]), 1)
+                    hyps.append(reply)
+                    refs.append(item.gold)
                 else:
                     # MAFAND references are GPL-3.0, so they are not written out; the id
                     # is the line number in the upstream test file.
@@ -100,6 +116,10 @@ def run(
                 result["unparsed"] = sum(r["parsed"] is None for r in rows)
                 if task.chance:
                     result["chance"] = round(100 * task.chance, 1)
+            elif task.metric == "wer":
+                result["score"] = round(100 * scoring.wer(hyps, refs), 1)
+                result["score_ignoring_tones"] = round(
+                    100 * scoring.wer(hyps, refs, ignore_tones=True), 1)
             else:
                 result["score"] = round(scoring.chrf(hyps, refs), 1)
             summary["results"].append(result)

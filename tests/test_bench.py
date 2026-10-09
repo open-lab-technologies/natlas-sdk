@@ -56,3 +56,30 @@ def test_sample_is_seeded_and_ordered():
     ids = [int(i.id.rsplit("-", 1)[1]) for i in first]
     assert ids == sorted(ids)
     assert data.sample(items, None, seed=0) == items
+
+
+def test_normalise_transcript_keeps_tone_marks():
+    assert scoring.normalise_transcript("Ètò ẹ̀kọ́ kan, yíò!") == "ètò ẹ̀kọ́ kan yíò"
+    assert scoring.normalise_transcript("n'ụbọchị  Tuzde.") == "n'ụbọchị tuzde"
+
+
+def test_wer_counts_missing_diacritic_as_error():
+    assert scoring.wer(["ètò ẹ̀kọ́ kan yíò"], ["Ètò ẹ̀kọ́ kan yíò."]) == 0
+    assert scoring.wer(["ètò ẹ̀kọ́ kan yóò"], ["Ètò ẹ̀kọ́ kan yíò."]) == 0.25
+
+
+@pytest.mark.parametrize(("text", "looped"), [
+    ("onye na-ekwu onye onye onye onye otu", True),
+    ("x n'ụlọ ngosi n'ụlọ ngosi n'ụlọ ngosi n'ụlọ ngosi", True),  # loop at an odd offset
+    ("mo ri i, mo ri i lana", False),
+    ("a b a b a b c", False),
+])
+def test_looks_looped(text, looped):
+    from natlas.asr import looks_looped
+
+    assert looks_looped(text) is looped
+
+
+def test_wer_ignoring_tones():
+    assert scoring.wer(["àwọn ìròyìn"], ["Awon iroyin"]) == 1.0
+    assert scoring.wer(["àwọn ìròyìn"], ["Awon iroyin"], ignore_tones=True) == 0

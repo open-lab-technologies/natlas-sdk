@@ -118,3 +118,71 @@ def mafand(lang: str, direction: str) -> list[Item]:
         )
         items.append(Item(f"mafand-{direction.replace('xx', lang)}-{i}", prompt, ref))
     return items
+
+
+FLEURS = "https://huggingface.co/datasets/google/fleurs/resolve/main/data/{code}/{name}"
+# FLEURS has no Nigerian-accented English, so English is scored on US speakers.
+FLEURS_CODES = {"en": "en_us", "ha": "ha_ng", "ig": "ig_ng", "yo": "yo_ng"}
+
+
+def fleurs(lang: str, n: int) -> list[Item]:
+    """The first `n` clips of the FLEURS dev split, with their reference transcripts.
+
+    The audio archives are hundreds of MB, so the archive is streamed and
+    reading stops once `n` clips are on disk.
+    """
+    import tarfile
+
+    code = FLEURS_CODES[lang]
+    rows = _fetch(FLEURS.format(code=code, name="dev.tsv"), f"fleurs-{code}-dev.tsv")
+    transcripts = {}
+    for line in rows.splitlines():
+        cols = line.split("\t")
+        if len(cols) >= 3:
+            transcripts[cols[1]] = cols[2]
+
+    audio_dir = cache_dir() / "bench" / f"fleurs-{code}"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    have = sorted(p.name for p in audio_dir.glob("*.wav"))
+    if len(have) < n:
+        url = FLEURS.format(code=code, name="audio/dev.tar.gz")
+        with httpx.stream("GET", url, follow_redirects=True, timeout=120) as resp:
+            resp.raise_for_status()
+            with tarfile.open(fileobj=_StreamReader(resp.iter_bytes()), mode="r|gz") as tar:
+                for member in tar:
+                    name = Path(member.name).name
+                    if not member.isfile() or name not in transcripts:
+                        continue
+                    target = audio_dir / name
+                    if not target.exists():
+                        target.write_bytes(tar.extractfile(member).read())
+                        have.append(name)
+                    if len(set(have)) >= n:
+                        break
+        have = sorted(p.name for p in audio_dir.glob("*.wav"))
+
+    return [
+        Item(f"fleurs-{lang}-{i}", "", transcripts[name], {"audio": str(audio_dir / name)})
+        for i, name in enumerate(have[:n])
+    ]
+
+
+class _StreamReader(io.RawIOBase):
+    """File-like view over an iterator of byte chunks, for streaming tarfile reads."""
+
+    def __init__(self, chunks):
+        self._chunks = iter(chunks)
+        self._buffer = b""
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, b) -> int:
+        while not self._buffer:
+            try:
+                self._buffer = next(self._chunks)
+            except StopIteration:
+                return 0
+        size = min(len(b), len(self._buffer))
+        b[:size], self._buffer = self._buffer[:size], self._buffer[size:]
+        return size
