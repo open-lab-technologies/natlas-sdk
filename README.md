@@ -139,7 +139,35 @@ because MAFAND is GPL-3.0. N-ATLAS was trained partly on open Hugging Face
 datasets, so some test items may have been seen in training; treat scores as
 an upper bound until that is ruled out.
 
-Results for the 4-bit build are in [bench-results](bench-results/).
+### Results: N-ATLAS 4-bit (Q4_K_M), llama.cpp on Apple Silicon
+
+100 items per language per task, seed 0, temperature 0. Full replies in
+[bench-results/n-atlas-q4_k_m](bench-results/n-atlas-q4_k_m/).
+
+| Task | Metric | English | Hausa | Igbo | Yoruba | Chance |
+|---|---|---:|---:|---:|---:|---:|
+| AfriMMLU | accuracy % | 53 | 35 | 41 | 37 | 25 |
+| AfriXNLI | accuracy % | 70 | 58 | 57 | 53 | 33 |
+| AfriMGSM | accuracy % | 70 | 42 | 34 | 40 | |
+| MAFAND English to language | chrF++ | | 33.7 | 41.1 | 28.0 | |
+| MAFAND language to English | chrF++ | | 37.5 | 40.7 | 41.8 | |
+
+How to read this:
+
+- Every Nigerian-language score is above chance, but well below English. The
+  gap is largest on knowledge (AfriMMLU) and maths (AfriMGSM).
+- Translating into Yoruba is the weakest direction (28.0 chrF++), which matches
+  the low Yoruba fluency in the model card's human evaluation.
+- With 100 items, an accuracy score is roughly plus or minus 10 points at 95%
+  confidence. Differences smaller than that between languages are not meaningful.
+- These are 4-bit numbers. The full-precision model may score higher; run
+  `natlas bench` against a vLLM endpoint serving the official weights to compare.
+
+Reproduce with:
+
+```bash
+natlas bench -n 100 --seed 0 --out bench-results/my-run
+```
 
 ## Model notes
 

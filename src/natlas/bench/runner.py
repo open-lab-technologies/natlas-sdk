@@ -79,11 +79,14 @@ def run(
                 except NAtlasError as e:
                     reply, failures = "", failures + 1
                     print(f"\n{item.id}: {e}", file=sys.stderr)
-                row = {"id": item.id, "gold": item.gold, "reply": reply}
+                row = {"id": item.id, "reply": reply}
                 if task.metric == "accuracy":
+                    row["gold"] = item.gold
                     row["parsed"] = task.parse(reply)
                     row["correct"] = _correct(task, row["parsed"], item.gold)
                 else:
+                    # MAFAND references are GPL-3.0, so they are not written out; the id
+                    # is the line number in the upstream test file.
                     hyps.append(reply.strip().splitlines()[0] if reply.strip() else "")
                     refs.append(item.gold)
                 rows.append(row)

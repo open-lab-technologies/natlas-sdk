@@ -1,0 +1,100 @@
+{"id": "afrimmlu-yo-0", "gold": "C", "reply": "B. p = 8", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-7", "gold": "B", "reply": "D. 12.72", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-20", "gold": "C", "reply": "D. 16", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-31", "gold": "B", "reply": "D. 16 ṣẹ", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-32", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-37", "gold": "D", "reply": "A. 3-p", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-41", "gold": "D", "reply": "B. w < 2.4", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-46", "gold": "D", "reply": "D. 3.8,", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-47", "gold": "C", "reply": "B. 11", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-48", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-50", "gold": "A", "reply": "B. ẹyẹ 40", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-51", "gold": "B", "reply": "C. 131", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-55", "gold": "A", "reply": "B. 10", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-71", "gold": "A", "reply": "B. 240", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-72", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-75", "gold": "D", "reply": "C. SSSSSSSS;", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-97", "gold": "A", "reply": "B", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-104", "gold": "D", "reply": "B", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-111", "gold": "B", "reply": "D. Òdiwọn à", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-113", "gold": "D", "reply": "C. sàkánì.", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-122", "gold": "D", "reply": "D. Christianity àti Buddhism", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-124", "gold": "B", "reply": "C. ìjọba al", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-128", "gold": "C", "reply": "B. Àtọwọ́", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-132", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-133", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-144", "gold": "D", "reply": "D. Burgess", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-149", "gold": "B", "reply": "C. North Africa", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-154", "gold": "D", "reply": "D. Mongolia", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-155", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-158", "gold": "D", "reply": "D. àwọn olùgb", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-161", "gold": "B", "reply": "A. Ìjàngbara I", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-163", "gold": "D", "reply": "D. UN lọ́pọ", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-166", "gold": "D", "reply": "D. Romance", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-169", "gold": "C", "reply": "A. tíọ́rì p", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-170", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-181", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-183", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-197", "gold": "D", "reply": "D. ààlà àd", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-204", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-207", "gold": "B", "reply": "B. Ó túmọ̀", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-215", "gold": "B", "reply": "D. Ìwé kan t", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-222", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-226", "gold": "C", "reply": "D. Èròngbà", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-229", "gold": "C", "reply": "C. Ilé ẹjọ", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-241", "gold": "B", "reply": "C. Ẹ̀kọ́", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-244", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-248", "gold": "A", "reply": "A. Ìdánimọ", "parsed": "A", "correct": true}
+{"id": "afrimmlu-yo-250", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-252", "gold": "C", "reply": "C. Níwọ̀n", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-258", "gold": "A", "reply": "B. Àṣẹ tí k", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-260", "gold": "A", "reply": "A. Àwọn aṣ", "parsed": "A", "correct": true}
+{"id": "afrimmlu-yo-261", "gold": "C", "reply": "C. Ìpínlẹ", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-266", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-272", "gold": "C", "reply": "D. Àwọn ọm", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-278", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-280", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-282", "gold": "C", "reply": "C. The absence of implementing legislation with", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-286", "gold": "A", "reply": "A. Irú ìjín", "parsed": "A", "correct": true}
+{"id": "afrimmlu-yo-290", "gold": "A", "reply": "D. Àwọn ọ‌", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-298", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-308", "gold": "C", "reply": "B. 38%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-312", "gold": "C", "reply": "C. 9%", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-313", "gold": "A", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-316", "gold": "A", "reply": "B", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-320", "gold": "A", "reply": "B. 45%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-327", "gold": "C", "reply": "B. 43%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-342", "gold": "C", "reply": "B. China", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-350", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-360", "gold": "C", "reply": "C. 150 mílíọ̀", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-361", "gold": "A", "reply": "D. Bhutan, Cambodia, Uruguay", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-363", "gold": "C", "reply": "B. 58%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-368", "gold": "C", "reply": "B. 69%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-373", "gold": "C", "reply": "B. $1,000", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-386", "gold": "C", "reply": "B. 56%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-388", "gold": "C", "reply": "B. $75,000", "parsed": "B", "correct": false}
+{"id": "afrimmlu-yo-401", "gold": "C", "reply": "D. Àdínkù ow", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-409", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-411", "gold": "C", "reply": "C. Iye owó jẹ", "parsed": "C", "correct": true}
+{"id": "afrimmlu-yo-412", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-414", "gold": "B", "reply": "B. ẹ̀rọ à", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-422", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-423", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-424", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-430", "gold": "D", "reply": "D. Jason gbọ́dọ", "parsed": "D", "correct": true}
+{"id": "afrimmlu-yo-432", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-435", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-443", "gold": "C", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-447", "gold": "C", "reply": "A", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-455", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-yo-456", "gold": "B", "reply": "A. I, II, àti", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-461", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-464", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-465", "gold": "D", "reply": "A", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-467", "gold": "A", "reply": "D. Ìlọsọ", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-468", "gold": "D", "reply": "A. Pípọ̀si", "parsed": "A", "correct": false}
+{"id": "afrimmlu-yo-470", "gold": "B", "reply": "C. Owó oṣù", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-478", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-yo-485", "gold": "C", "reply": "D. Gbígba òṣ", "parsed": "D", "correct": false}
+{"id": "afrimmlu-yo-488", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-yo-489", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
