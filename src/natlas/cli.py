@@ -50,6 +50,24 @@ def _chat(args: argparse.Namespace) -> None:
             history.append({"role": "assistant", "content": "".join(reply)})
 
 
+def _bench(args: argparse.Namespace) -> None:
+    from pathlib import Path
+
+    from .bench import TASKS, run
+
+    tasks = [t.strip() for t in args.tasks.split(",") if t.strip()]
+    unknown = [t for t in tasks if t not in TASKS]
+    if unknown:
+        raise ValueError(f"Unknown task(s) {unknown}. Choose from {', '.join(TASKS)}")
+    languages = args.languages.split(",") if args.languages else None
+    with NAtlas(base_url=args.base_url, timeout=600) as client:
+        summary = run(client, tasks, languages, args.n or None, Path(args.out), args.seed,
+                      args.label)
+    from .bench.runner import to_markdown
+
+    print(to_markdown(summary))
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="natlas", description="Tools for building with N-ATLAS")
     parser.add_argument("--base-url", help="OpenAI-compatible endpoint (default: $NATLAS_BASE_URL)")
@@ -74,6 +92,14 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--to", required=True)
     p.add_argument("--from", dest="source", default="en")
 
+    p = sub.add_parser("bench", help="Score an endpoint on public Nigerian-language benchmarks")
+    p.add_argument("--tasks", default="afrimmlu,afrixnli,afrimgsm,mt-en-xx,mt-xx-en")
+    p.add_argument("--languages", help="Comma-separated subset of en,ha,ig,yo")
+    p.add_argument("-n", type=int, default=100, help="Items per language; 0 for the full set")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--label", default="n-atlas", help="Name for this run in the report")
+    p.add_argument("--out", default="bench-results", help="Directory for results")
+
     p = sub.add_parser("transcribe", help="Speech to text with the N-ATLAS speech models")
     p.add_argument("audio")
     p.add_argument("--language", "-l", required=True)
@@ -89,6 +115,8 @@ def main(argv: list[str] | None = None) -> None:
         elif args.command == "translate":
             with NAtlas(base_url=args.base_url) as client:
                 print(client.translate(args.text, to=args.to, source=args.source))
+        elif args.command == "bench":
+            _bench(args)
         elif args.command == "transcribe":
             with NAtlas(base_url=args.base_url) as client:
                 print(client.transcribe(args.audio, language=args.language))

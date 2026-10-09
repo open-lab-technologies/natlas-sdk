@@ -23,6 +23,9 @@ asr = [
     "librosa>=0.10",
     "soundfile>=0.12",
 ]
+bench = [
+    "sacrebleu>=2.4",
+]
 dev = [
     "pytest>=8",
     "respx>=0.21",
