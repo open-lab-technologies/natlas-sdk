@@ -74,7 +74,8 @@ def main(argv: list[str] | None = None) -> None:
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("download", help="Download quantised N-ATLAS weights")
-    p.add_argument("--quant", default=DEFAULT_QUANT, choices=QUANTS)
+    p.add_argument("--quant", default=DEFAULT_QUANT, choices=QUANTS,
+                   help="Q4_K_M or larger recommended; Q2_K and Q3_K_M lose noticeable quality")
 
     p = sub.add_parser("serve", help="Run an OpenAI-compatible server on a local model")
     p.add_argument("--model", help="Path to a GGUF file (default: downloaded --quant)")

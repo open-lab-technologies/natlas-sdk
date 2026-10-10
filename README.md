@@ -200,6 +200,10 @@ of the official weights. The official repository ships only full-precision
 safetensors, which need about 16 GB of GPU memory. To serve those, run vLLM or
 another OpenAI-compatible server and point the client at it.
 
+Use Q4_K_M (the default) or larger. Smaller builds lose real quality: in
+testing, Q2_K returned the English input unchanged when asked to translate it
+into Hausa, where Q4_K_M translated it correctly.
+
 The chat template stamps today's date into every prompt. llama.cpp's own chat
 formatting leaves that date at the template default, so `natlas serve` renders
 the template itself.
