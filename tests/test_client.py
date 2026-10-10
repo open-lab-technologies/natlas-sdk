@@ -50,7 +50,7 @@ def test_chat_sends_only_standard_fields(client):
     reply = client.chat("Capital of Nigeria?")
 
     assert reply.text == "Abuja."
-    assert reply.usage["total_tokens"] == 7
+    assert reply.usage.total_tokens == 7
     sent = json.loads(route.calls[0].request.content)
     assert set(sent) == {"model", "messages", "stream", "temperature", "max_tokens"}
     assert sent["messages"][0] == {"role": "system", "content": SYSTEM_PROMPT}

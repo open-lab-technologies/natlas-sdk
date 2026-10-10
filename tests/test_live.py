@@ -47,7 +47,7 @@ def test_models_listed(client):
 def test_chat_answers_in_every_language(client, prompt, expected):
     reply = client.chat(prompt, temperature=0.0, max_tokens=40)
     assert expected in reply.text.lower()
-    assert reply.usage["completion_tokens"] > 0
+    assert reply.usage.completion_tokens > 0
 
 
 def test_stream_matches_chat(client):
