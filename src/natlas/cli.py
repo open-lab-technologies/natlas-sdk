@@ -7,7 +7,7 @@ import os
 import sys
 
 from .client import NAtlas, NAtlasError
-from .models import DEFAULT_QUANT, QUANTS, default_model_path, download
+from .models import DEFAULT_QUANT, QUANTS, DownloadError, default_model_path, download
 
 
 def _serve(args: argparse.Namespace) -> None:
@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> None:
         elif args.command == "transcribe":
             with NAtlas(base_url=args.base_url) as client:
                 print(client.transcribe(args.audio, language=args.language))
-    except (NAtlasError, ValueError, FileNotFoundError) as e:
+    except (NAtlasError, DownloadError, ValueError, FileNotFoundError) as e:
         sys.exit(f"error: {e}")
 
 

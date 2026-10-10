@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -9,10 +10,16 @@ from pathlib import Path
 import httpx
 
 # Community GGUF conversion of NCAIR1/N-ATLaS. The official repo ships only
-# safetensors, which need a CUDA GPU and ~16 GB to run unquantised.
+# safetensors, which need a CUDA GPU and ~16 GB to run unquantised. Pinned to a
+# revision so an upstream re-upload cannot change what users get without a release.
 GGUF_REPO = "QuantFactory/N-ATLaS-GGUF"
+GGUF_REVISION = "fdc9567e20a63e8d27736d640cabe61e937befa8"
 QUANTS = ("Q2_K", "Q3_K_M", "Q4_K_M", "Q5_K_M", "Q6_K", "Q8_0")
 DEFAULT_QUANT = "Q4_K_M"
+
+
+class DownloadError(Exception):
+    pass
 
 
 def cache_dir() -> Path:
@@ -30,27 +37,59 @@ def default_model_path(quant: str = DEFAULT_QUANT) -> Path:
     return Path(env).expanduser() if env else cache_dir() / gguf_filename(quant)
 
 
+def expected_file(filename: str) -> tuple[str, int]:
+    """SHA-256 and size Hugging Face records for `filename` at the pinned revision."""
+    url = f"https://huggingface.co/api/models/{GGUF_REPO}/tree/{GGUF_REVISION}"
+    resp = httpx.get(url, timeout=30, follow_redirects=True)
+    resp.raise_for_status()
+    for entry in resp.json():
+        if entry.get("path") == filename and entry.get("lfs"):
+            return entry["lfs"]["oid"], entry["lfs"]["size"]
+    raise DownloadError(f"{filename} not found in {GGUF_REPO}@{GGUF_REVISION[:8]}")
+
+
 def download(quant: str = DEFAULT_QUANT, dest: Path | None = None) -> Path:
-    """Download a GGUF build, resuming a partial download if one exists."""
-    dest = dest or cache_dir() / gguf_filename(quant)
-    if dest.exists() and dest.stat().st_size > 0 and not dest.with_suffix(".part").exists():
-        return dest
-    dest.parent.mkdir(parents=True, exist_ok=True)
+    """Download a GGUF build, resuming a partial download, and verify its SHA-256."""
+    filename = gguf_filename(quant)
+    dest = dest or cache_dir() / filename
     part = dest.with_suffix(".part")
-    url = f"https://huggingface.co/{GGUF_REPO}/resolve/main/{gguf_filename(quant)}"
+    if dest.exists() and not part.exists():
+        return dest
+    sha256, size = expected_file(filename)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+
+    digest = hashlib.sha256()
     done = part.stat().st_size if part.exists() else 0
-    headers = {"Range": f"bytes={done}-"} if done else {}
-    with httpx.stream("GET", url, headers=headers, follow_redirects=True, timeout=60) as resp:
-        resp.raise_for_status()
-        total = done + int(resp.headers.get("content-length", 0))
-        with part.open("ab" if resp.status_code == 206 else "wb") as f:
-            if resp.status_code != 206:
-                done = 0
-            for block in resp.iter_bytes(1 << 20):
-                f.write(block)
-                done += len(block)
-                if total:
-                    sys.stderr.write(f"\r{dest.name}: {done / total:6.1%} of {total / 1e9:.1f} GB")
-    sys.stderr.write("\n")
+    if done > size:
+        part.unlink()
+        done = 0
+    if done:
+        with part.open("rb") as f:
+            for block in iter(lambda: f.read(1 << 20), b""):
+                digest.update(block)
+
+    if done < size:
+        url = f"https://huggingface.co/{GGUF_REPO}/resolve/{GGUF_REVISION}/{filename}"
+        headers = {"Range": f"bytes={done}-"} if done else {}
+        with httpx.stream("GET", url, headers=headers, follow_redirects=True, timeout=60) as resp:
+            resp.raise_for_status()
+            if resp.status_code != 206 and done:
+                # Server ignored the range request: start again from zero.
+                digest, done = hashlib.sha256(), 0
+            with part.open("ab" if done else "wb") as f:
+                for block in resp.iter_bytes(1 << 20):
+                    f.write(block)
+                    digest.update(block)
+                    done += len(block)
+                    sys.stderr.write(f"\r{filename}: {done / size:6.1%} of {size / 1e9:.1f} GB")
+        sys.stderr.write("\n")
+
+    if done != size or digest.hexdigest() != sha256:
+        part.unlink(missing_ok=True)
+        raise DownloadError(
+            f"{filename} failed verification ({done} of {size} bytes, sha256 "
+            f"{digest.hexdigest()[:12]} expected {sha256[:12]}); the partial file was "
+            "removed, run the download again"
+        )
     part.rename(dest)
     return dest
