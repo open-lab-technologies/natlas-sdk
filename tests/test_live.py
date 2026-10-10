@@ -9,6 +9,7 @@ Speech tests also need ffmpeg and use FLEURS clips downloaded by `natlas bench`.
 import os
 import shutil
 import subprocess
+import time
 
 import httpx
 import pytest
@@ -68,6 +69,19 @@ def test_translate_changes_the_text(client, lang):
     source = "Good morning, how is your family?"
     out = client.translate(source, to=lang)
     assert out and out.lower() != source.lower()
+
+
+def test_server_recovers_when_a_client_hangs_up_mid_stream(client):
+    headers = {"Authorization": f"Bearer {KEY}"} if KEY else {}
+    body = {"model": "n-atlas", "stream": True, "max_tokens": 400,
+            "messages": [{"role": "user", "content": "Write a long story about Lagos."}]}
+    with httpx.Client(timeout=60) as http, \
+            http.stream("POST", f"{URL}/chat/completions", json=body, headers=headers) as resp:
+        for _ in resp.iter_lines():
+            break
+    start = time.monotonic()
+    assert client.chat("Say yes.", max_tokens=5).text
+    assert time.monotonic() - start < 30
 
 
 def test_prompt_longer_than_context_is_rejected(client):

@@ -34,6 +34,9 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
   and diagnostics through the `natlas` loggers.
 - The server depends on the `Engine` and `Transcriber` protocols, not on
   llama.cpp or transformers.
+- Endpoints consume engine output through `_Generation` and call `stop()` in a
+  `finally`. Engines hold a lock while generating; iterating their generator
+  directly lets a client that hangs up mid-stream lock the server for good.
 - Render the chat template in `LlamaCppEngine`, not with llama.cpp's formatter:
   the template stamps today's date, which llama.cpp leaves at a placeholder.
 - Clear the llama.cpp cache before every generation. Prefix reuse makes a

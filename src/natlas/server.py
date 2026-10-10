@@ -7,11 +7,13 @@ drop-in clients get the behaviour the model was tuned for.
 
 from __future__ import annotations
 
+import asyncio
 import hmac
-import itertools
 import json
+import threading
 import time
 import uuid
+from collections.abc import AsyncIterator, Iterator
 from typing import Any, Literal
 
 from ._extras import require
@@ -25,7 +27,7 @@ from pydantic import BaseModel, field_validator
 
 from . import __version__, defaults
 from .asr import Transcriber
-from .engine import Engine
+from .engine import Chunk, Engine
 from .languages import LANGUAGES, get_language
 
 MODEL_ID = "n-atlas"
@@ -71,6 +73,57 @@ def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse({"error": {"message": message, "type": kind, "code": status}}, status)
 
 
+class _Generation:
+    """Runs an engine generator on a worker thread and hands chunks to the event loop.
+
+    Engines hold a lock while generating. If a client hangs up mid-stream and the
+    generator is simply abandoned, that lock is never released and every later
+    request waits forever. `stop()` makes the worker stop at the next chunk and
+    close the generator on its own thread, which releases the engine.
+    """
+
+    _DONE = object()
+
+    def __init__(self, chunks: Iterator[Chunk]):
+        self._chunks = chunks
+        self._queue: asyncio.Queue[Any] = asyncio.Queue()
+        self._loop = asyncio.get_running_loop()
+        self._stopped = threading.Event()
+        threading.Thread(target=self._work, name="natlas-generate", daemon=True).start()
+
+    def _put(self, item: Any) -> None:
+        try:
+            self._loop.call_soon_threadsafe(self._queue.put_nowait, item)
+        except RuntimeError:  # event loop already closed during shutdown
+            pass
+
+    def _work(self) -> None:
+        try:
+            for chunk in self._chunks:
+                if self._stopped.is_set():
+                    break
+                self._put(chunk)
+        except Exception as e:  # noqa: BLE001  any engine failure goes to the caller
+            self._put(e)
+        finally:
+            close = getattr(self._chunks, "close", None)
+            if close:
+                close()
+            self._put(self._DONE)
+
+    async def next(self) -> Chunk | None:
+        """The next chunk, None when generation has finished, or the engine's error."""
+        item = await self._queue.get()
+        if item is self._DONE:
+            return None
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    def stop(self) -> None:
+        self._stopped.set()
+
+
 def create_app(
     engine: Engine,
     asr: Transcriber | None = None,
@@ -82,6 +135,10 @@ def create_app(
     @app.exception_handler(HTTPException)
     async def http_error(_: Request, exc: HTTPException) -> JSONResponse:
         return _error(exc.status_code, str(exc.detail))
+
+    @app.exception_handler(Exception)
+    async def unexpected_error(_: Request, exc: Exception) -> JSONResponse:
+        return _error(500, f"{type(exc).__name__}: {exc}")
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -97,19 +154,6 @@ def create_app(
             if not hmac.compare_digest(supplied, api_key):
                 return _error(401, "Missing or invalid API key")
         return await call_next(request)
-
-    def start(messages: list[dict[str, str]], params: dict[str, Any]):
-        """Begin generating, turning a prompt that cannot fit into a 400.
-
-        The first chunk is pulled before any response is sent, so an over-long
-        prompt fails cleanly even on a streaming request.
-        """
-        stream = engine.generate(messages, **params)
-        try:
-            first = next(stream, None)
-        except ValueError as e:  # llama.cpp: "Requested tokens ... exceed context window"
-            raise HTTPException(400, str(e)) from e
-        return first, stream
 
     def prepare(req: ChatRequest) -> list[dict[str, str]]:
         if not req.messages:
@@ -132,7 +176,7 @@ def create_app(
         return {"object": "list", "data": data}
 
     @app.post("/v1/chat/completions")
-    def chat(req: ChatRequest):
+    async def chat(req: ChatRequest):
         messages = prepare(req)
         stop = [req.stop] if isinstance(req.stop, str) else (req.stop or [])
         params = {
@@ -145,34 +189,56 @@ def create_app(
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
         created = int(time.time())
 
-        first, rest = start(messages, params)
-        chunks = itertools.chain([first] if first else [], rest)
+        generation = _Generation(engine.generate(messages, **params))
+        try:
+            # Pulled before any response is sent, so a prompt that cannot fit the
+            # context window is a 400 even on a streaming request.
+            first = await generation.next()
+        except ValueError as e:
+            generation.stop()
+            raise HTTPException(400, str(e)) from e
+        except BaseException:
+            generation.stop()
+            raise
 
         if req.stream:
-            def events():
-                def frame(delta: dict, finish: str | None) -> str:
-                    body = {
-                        "id": completion_id, "object": "chat.completion.chunk",
-                        "created": created, "model": MODEL_ID,
-                        "choices": [{"index": 0, "delta": delta, "finish_reason": finish}],
-                    }
-                    return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
+            def frame(body: dict[str, Any]) -> str:
+                return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
 
-                yield frame({"role": "assistant"}, None)
-                finish = "stop"
-                for chunk in chunks:
-                    if chunk.text:
-                        yield frame({"content": chunk.text}, None)
-                    finish = chunk.finish_reason or finish
-                yield frame({}, finish)
+            def delta(content: dict[str, str], finish: str | None) -> str:
+                return frame({
+                    "id": completion_id, "object": "chat.completion.chunk",
+                    "created": created, "model": MODEL_ID,
+                    "choices": [{"index": 0, "delta": content, "finish_reason": finish}],
+                })
+
+            async def events() -> AsyncIterator[str]:
+                finish, chunk = "stop", first
+                try:
+                    yield delta({"role": "assistant"}, None)
+                    while chunk is not None:
+                        if chunk.text:
+                            yield delta({"content": chunk.text}, None)
+                        finish = chunk.finish_reason or finish
+                        chunk = await generation.next()
+                    yield delta({}, finish)
+                except Exception as e:  # noqa: BLE001  headers are sent; report it in the stream
+                    yield frame({"error": {"message": str(e), "type": "server_error"}})
+                finally:
+                    # Runs when the client hangs up too, so the engine is released.
+                    generation.stop()
                 yield "data: [DONE]\n\n"
 
             return StreamingResponse(events(), media_type="text/event-stream")
 
-        parts, finish = [], "stop"
-        for chunk in chunks:
-            parts.append(chunk.text)
-            finish = chunk.finish_reason or finish
+        parts, finish, chunk = [], "stop", first
+        try:
+            while chunk is not None:
+                parts.append(chunk.text)
+                finish = chunk.finish_reason or finish
+                chunk = await generation.next()
+        finally:
+            generation.stop()
         text = "".join(parts).strip()
         prompt_tokens = engine.count_prompt_tokens(messages)
         completion_tokens = engine.count_tokens(text)
