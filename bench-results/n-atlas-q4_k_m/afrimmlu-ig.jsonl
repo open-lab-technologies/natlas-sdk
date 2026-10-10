@@ -1,0 +1,100 @@
+{"id": "afrimmlu-ig-0", "gold": "C", "reply": "B. p = 8", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-7", "gold": "B", "reply": "D. 12.72", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-20", "gold": "C", "reply": "D. 16", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-31", "gold": "B", "reply": "C. Iri na Isii na", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-32", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-37", "gold": "D", "reply": "A. 3-p", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-41", "gold": "D", "reply": "A. w>2.3", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-46", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-47", "gold": "C", "reply": "C. 20", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-48", "gold": "D", "reply": "A", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-50", "gold": "A", "reply": "C. Nnụnụ 42", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-51", "gold": "B", "reply": "C. 131", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-55", "gold": "A", "reply": "B. 10", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-71", "gold": "A", "reply": "B. 240", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-72", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-75", "gold": "D", "reply": "B. SSSSS;AAAA", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-97", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-104", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-111", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-113", "gold": "D", "reply": "D. hinterland.", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-122", "gold": "D", "reply": "D. Christianity na Buddhism", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-124", "gold": "B", "reply": "B. ọchịchị Ch", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-128", "gold": "C", "reply": "C. ihe okike", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-132", "gold": "C", "reply": "D. ya na isi ụl", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-133", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-144", "gold": "D", "reply": "D. Burgess", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-149", "gold": "B", "reply": "C. North Africa", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-154", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-155", "gold": "C", "reply": "C. Nke atọ", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-158", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-161", "gold": "B", "reply": "B. Mgbanwe ọr", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-163", "gold": "D", "reply": "D. UN na-emekarị", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-166", "gold": "D", "reply": "D. Ndi Rome", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-169", "gold": "C", "reply": "B", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-170", "gold": "B", "reply": "B. Shiite", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-181", "gold": "B", "reply": "C. Mwakpo site n", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-183", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-197", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-204", "gold": "B", "reply": "B. Ọ bụ ọr", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-207", "gold": "B", "reply": "B. Ọ pụtara", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-215", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-222", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-226", "gold": "C", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-229", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-241", "gold": "B", "reply": "C. Ozizi omume nke", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-244", "gold": "C", "reply": "C. Mpaghara dịk", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-248", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-250", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-252", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-258", "gold": "A", "reply": "D. N'ihe gbasara", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-260", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ig-261", "gold": "C", "reply": "C. Steeti nke na-em", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-266", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-272", "gold": "C", "reply": "D. Achịkwaghị nd", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-278", "gold": "B", "reply": "B. Nnabata nke", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-280", "gold": "B", "reply": "D. ECHR na-etinye", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-282", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-286", "gold": "A", "reply": "D. Ụlọ ikpe", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-290", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ig-298", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-308", "gold": "C", "reply": "B. 38%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-312", "gold": "C", "reply": "C. 9%", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-313", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-316", "gold": "A", "reply": "B. 49%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-320", "gold": "A", "reply": "B. 45%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-327", "gold": "C", "reply": "B. 43%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-342", "gold": "C", "reply": "B. China", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-350", "gold": "B", "reply": "B. 2%", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-360", "gold": "C", "reply": "B. Nde 30", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-361", "gold": "A", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-363", "gold": "C", "reply": "B. 58%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-368", "gold": "C", "reply": "B. 69%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-373", "gold": "C", "reply": "B. $1,000", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-386", "gold": "C", "reply": "B. 56%", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-388", "gold": "C", "reply": "C. $35,000", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-401", "gold": "C", "reply": "B. Mụbaa isi ego", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ig-409", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-411", "gold": "C", "reply": "D. Ọnụ ahịa", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-412", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-414", "gold": "B", "reply": "B. Ihe akụrụ", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-422", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-423", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-424", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ig-430", "gold": "D", "reply": "D. Jason kwesịrị", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-432", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ig-435", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-443", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-447", "gold": "C", "reply": "A", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-455", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-456", "gold": "B", "reply": "D. I na III.", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-461", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-464", "gold": "D", "reply": "A", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-465", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ig-467", "gold": "A", "reply": "D", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-468", "gold": "D", "reply": "A. mmụba nke", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ig-470", "gold": "B", "reply": "D. Tekinọlọj", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ig-478", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ig-485", "gold": "C", "reply": "C. Ịgba mbọ bel", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ig-488", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ig-489", "gold": "D", "reply": "C. mgbatunata", "parsed": "C", "correct": false}

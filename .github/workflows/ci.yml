@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install
+        # llama-cpp-python and torch are left out: the tests use a fake engine and
+        # never load a model, and building llama.cpp would add minutes per run.
+        run: |
+          uv venv --python ${{ matrix.python }}
+          uv pip install -e ".[bench,dev]" fastapi python-multipart
+      - name: Lint
+        run: uv run --no-sync ruff check src tests playground
+      - name: Test
+        run: uv run --no-sync pytest -q

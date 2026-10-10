@@ -1,0 +1,50 @@
+{
+  "label": "N-ATLAS speech models on FLEURS dev",
+  "endpoint": "http://localhost:8000/v1",
+  "started": "2026-10-09T10:44:49+00:00",
+  "n_per_language": 50,
+  "seed": 0,
+  "results": [
+    {
+      "task": "asr-fleurs",
+      "language": "en",
+      "n": 50,
+      "metric": "wer",
+      "errors": 0,
+      "seconds": 63.8,
+      "score": 9.0,
+      "score_ignoring_tones": 9.0
+    },
+    {
+      "task": "asr-fleurs",
+      "language": "ha",
+      "n": 50,
+      "metric": "wer",
+      "errors": 0,
+      "seconds": 101.8,
+      "score": 31.3,
+      "score_ignoring_tones": 31.3
+    },
+    {
+      "task": "asr-fleurs",
+      "language": "ig",
+      "n": 50,
+      "metric": "wer",
+      "errors": 0,
+      "seconds": 172.1,
+      "score": 43.8,
+      "score_ignoring_tones": 37.3
+    },
+    {
+      "task": "asr-fleurs",
+      "language": "yo",
+      "n": 50,
+      "metric": "wer",
+      "errors": 0,
+      "seconds": 147.5,
+      "score": 55.7,
+      "score_ignoring_tones": 28.8
+    }
+  ],
+  "finished": "2026-10-09T10:52:54+00:00"
+}

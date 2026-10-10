@@ -1,0 +1,192 @@
+{
+  "label": "N-ATLaS Q4_K_M (llama.cpp, Apple GPU)",
+  "endpoint": "http://localhost:8000/v1",
+  "started": "2026-10-09T08:19:59+00:00",
+  "n_per_language": 100,
+  "seed": 0,
+  "results": [
+    {
+      "task": "afrimmlu",
+      "language": "en",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 33.4,
+      "score": 53.0,
+      "unparsed": 0,
+      "chance": 25.0
+    },
+    {
+      "task": "afrimmlu",
+      "language": "ha",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 51.1,
+      "score": 35.0,
+      "unparsed": 0,
+      "chance": 25.0
+    },
+    {
+      "task": "afrimmlu",
+      "language": "ig",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 51.3,
+      "score": 41.0,
+      "unparsed": 0,
+      "chance": 25.0
+    },
+    {
+      "task": "afrimmlu",
+      "language": "yo",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 75.7,
+      "score": 37.0,
+      "unparsed": 0,
+      "chance": 25.0
+    },
+    {
+      "task": "afrixnli",
+      "language": "en",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 22.9,
+      "score": 70.0,
+      "unparsed": 0,
+      "chance": 33.3
+    },
+    {
+      "task": "afrixnli",
+      "language": "ha",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 29.8,
+      "score": 58.0,
+      "unparsed": 0,
+      "chance": 33.3
+    },
+    {
+      "task": "afrixnli",
+      "language": "ig",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 33.9,
+      "score": 57.0,
+      "unparsed": 0,
+      "chance": 33.3
+    },
+    {
+      "task": "afrixnli",
+      "language": "yo",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 37.0,
+      "score": 53.0,
+      "unparsed": 0,
+      "chance": 33.3
+    },
+    {
+      "task": "afrimgsm",
+      "language": "en",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 638.6,
+      "score": 70.0,
+      "unparsed": 0
+    },
+    {
+      "task": "afrimgsm",
+      "language": "ha",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 1154.2,
+      "score": 42.0,
+      "unparsed": 0
+    },
+    {
+      "task": "afrimgsm",
+      "language": "ig",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 1284.4,
+      "score": 34.0,
+      "unparsed": 0
+    },
+    {
+      "task": "afrimgsm",
+      "language": "yo",
+      "n": 100,
+      "metric": "accuracy",
+      "errors": 0,
+      "seconds": 1242.0,
+      "score": 40.0,
+      "unparsed": 0
+    },
+    {
+      "task": "mt-en-xx",
+      "language": "ha",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 177.3,
+      "score": 33.7
+    },
+    {
+      "task": "mt-en-xx",
+      "language": "ig",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 135.3,
+      "score": 41.1
+    },
+    {
+      "task": "mt-en-xx",
+      "language": "yo",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 266.0,
+      "score": 28.0
+    },
+    {
+      "task": "mt-xx-en",
+      "language": "ha",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 121.5,
+      "score": 37.5
+    },
+    {
+      "task": "mt-xx-en",
+      "language": "ig",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 83.9,
+      "score": 40.7
+    },
+    {
+      "task": "mt-xx-en",
+      "language": "yo",
+      "n": 100,
+      "metric": "chrf",
+      "errors": 0,
+      "seconds": 133.7,
+      "score": 41.8
+    }
+  ],
+  "finished": "2026-10-09T09:52:51+00:00"
+}
