@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import httpx
@@ -48,8 +48,15 @@ def expected_file(filename: str) -> tuple[str, int]:
     raise DownloadError(f"{filename} not found in {GGUF_REPO}@{GGUF_REVISION[:8]}")
 
 
-def download(quant: str = DEFAULT_QUANT, dest: Path | None = None) -> Path:
-    """Download a GGUF build, resuming a partial download, and verify its SHA-256."""
+def download(
+    quant: str = DEFAULT_QUANT,
+    dest: Path | None = None,
+    progress: Callable[[int, int], None] | None = None,
+) -> Path:
+    """Download a GGUF build, resuming a partial download, and verify its SHA-256.
+
+    `progress` is called with (bytes done, total bytes) as blocks arrive.
+    """
     filename = gguf_filename(quant)
     dest = dest or cache_dir() / filename
     part = dest.with_suffix(".part")
@@ -81,8 +88,8 @@ def download(quant: str = DEFAULT_QUANT, dest: Path | None = None) -> Path:
                     f.write(block)
                     digest.update(block)
                     done += len(block)
-                    sys.stderr.write(f"\r{filename}: {done / size:6.1%} of {size / 1e9:.1f} GB")
-        sys.stderr.write("\n")
+                    if progress:
+                        progress(done, size)
 
     if done != size or digest.hexdigest() != sha256:
         part.unlink(missing_ok=True)

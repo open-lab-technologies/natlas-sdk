@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import json
-import sys
+import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..client import NAtlas, NAtlasError
+from ..client import NAtlas
+from ..errors import NAtlasError
 from . import data, scoring
+
+log = logging.getLogger("natlas.bench")
 
 
 @dataclass(frozen=True)
@@ -56,7 +59,12 @@ def run(
     out_dir: Path,
     seed: int = 0,
     label: str = "n-atlas",
+    progress: Callable[[str, str, int, int], None] | None = None,
 ) -> dict:
+    """Run `tasks` and write results to `out_dir`.
+
+    `progress` is called with (task, language, items done, items total).
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     summary: dict = {
         "label": label,
@@ -89,7 +97,7 @@ def run(
                                             max_tokens=task.max_tokens).text
                 except NAtlasError as e:
                     reply, failures = "", failures + 1
-                    print(f"\n{item.id}: {e}", file=sys.stderr)
+                    log.warning("%s failed: %s", item.id, e)
                 row = {"id": item.id, "reply": reply}
                 if task.metric == "accuracy":
                     row["gold"] = item.gold
@@ -106,8 +114,8 @@ def run(
                     hyps.append(reply.strip().splitlines()[0] if reply.strip() else "")
                     refs.append(item.gold)
                 rows.append(row)
-                sys.stderr.write(f"\r{name} {lang}: {k}/{len(items)}")
-            sys.stderr.write("\n")
+                if progress:
+                    progress(name, lang, k, len(items))
 
             result = {"task": name, "language": lang, "n": len(items), "metric": task.metric,
                       "errors": failures, "seconds": round(time.time() - t0, 1)}
