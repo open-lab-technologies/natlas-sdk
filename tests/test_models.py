@@ -90,3 +90,19 @@ def test_existing_model_is_reused_without_network(tmp_path):
 def test_unknown_quant_rejected():
     with pytest.raises(ValueError, match="Choose from"):
         models.gguf_filename("Q1")
+
+
+@respx.mock
+def test_progress_callback_reports_bytes(tmp_path):
+    mock_tree()
+    respx.get(FILE).mock(side_effect=serve_ranges)
+    seen = []
+    models.download(dest=tmp_path / FILENAME, progress=lambda done, total: seen.append(done))
+    assert seen[-1] == len(CONTENT)
+
+
+def test_missing_extra_names_the_install_command():
+    from natlas._extras import MissingExtraError, require
+
+    with pytest.raises(MissingExtraError, match=r"pip install 'natlas\[server\]'"):
+        require("a_module_that_does_not_exist", "server")

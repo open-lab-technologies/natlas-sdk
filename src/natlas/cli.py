@@ -6,12 +6,29 @@ import argparse
 import os
 import sys
 
-from .client import NAtlas, NAtlasError
+from ._extras import MissingExtraError, require
+from .client import NAtlas
+from .errors import NAtlasError
 from .models import DEFAULT_QUANT, QUANTS, DownloadError, default_model_path, download
 
 
+def _client(args: argparse.Namespace, **kwargs: object) -> NAtlas:
+    return NAtlas(base_url=args.base_url, model=args.model, **kwargs)
+
+
+def _download_progress(done: int, total: int) -> None:
+    end = "\n" if done >= total else ""
+    print(f"\rdownloading: {done / total:6.1%} of {total / 1e9:.1f} GB", end=end,
+          file=sys.stderr, flush=True)
+
+
+def _bench_progress(task: str, language: str, done: int, total: int) -> None:
+    end = "\n" if done >= total else ""
+    print(f"\r{task} {language}: {done}/{total}", end=end, file=sys.stderr, flush=True)
+
+
 def _serve(args: argparse.Namespace) -> None:
-    import uvicorn
+    uvicorn = require("uvicorn", "server")
 
     from .engine import LlamaCppEngine
     from .server import create_app
@@ -27,13 +44,13 @@ def _serve(args: argparse.Namespace) -> None:
     if not api_key and args.host not in ("127.0.0.1", "localhost", "::1"):
         print(f"warning: serving on {args.host} with no API key; anyone who can reach this "
               "machine can use the model. Set --api-key or NATLAS_API_KEY.", file=sys.stderr)
-    print(f"Serving {engine.model_path.name} on http://{args.host}:{args.port}/v1", file=sys.stderr)
+    print(f"Serving {engine.name} on http://{args.host}:{args.port}/v1", file=sys.stderr)
     uvicorn.run(create_app(engine, asr, api_key=api_key), host=args.host, port=args.port,
                 log_level="warning")
 
 
 def _chat(args: argparse.Namespace) -> None:
-    with NAtlas(base_url=args.base_url) as client:
+    with _client(args) as client:
         if args.prompt:
             for token in client.stream(" ".join(args.prompt)):
                 print(token, end="", flush=True)
@@ -66,9 +83,9 @@ def _bench(args: argparse.Namespace) -> None:
     if unknown:
         raise ValueError(f"Unknown task(s) {unknown}. Choose from {', '.join(TASKS)}")
     languages = args.languages.split(",") if args.languages else None
-    with NAtlas(base_url=args.base_url, timeout=600) as client:
+    with _client(args, timeout=600) as client:
         summary = run(client, tasks, languages, args.n or None, Path(args.out), args.seed,
-                      args.label)
+                      args.label, progress=_bench_progress)
     from .bench.runner import to_markdown
 
     print(to_markdown(summary))
@@ -77,6 +94,8 @@ def _bench(args: argparse.Namespace) -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="natlas", description="Tools for building with N-ATLAS")
     parser.add_argument("--base-url", help="OpenAI-compatible endpoint (default: $NATLAS_BASE_URL)")
+    parser.add_argument("--model", help="Model name the endpoint expects (default: $NATLAS_MODEL "
+                        "or n-atlas)")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("download", help="Download quantised N-ATLAS weights")
@@ -115,20 +134,20 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
     try:
         if args.command == "download":
-            print(download(args.quant))
+            print(download(args.quant, progress=_download_progress))
         elif args.command == "serve":
             _serve(args)
         elif args.command == "chat":
             _chat(args)
         elif args.command == "translate":
-            with NAtlas(base_url=args.base_url) as client:
+            with _client(args) as client:
                 print(client.translate(args.text, to=args.to, source=args.source))
         elif args.command == "bench":
             _bench(args)
         elif args.command == "transcribe":
-            with NAtlas(base_url=args.base_url) as client:
+            with _client(args) as client:
                 print(client.transcribe(args.audio, language=args.language))
-    except (NAtlasError, DownloadError, ValueError, FileNotFoundError) as e:
+    except (NAtlasError, DownloadError, MissingExtraError, ValueError, FileNotFoundError) as e:
         sys.exit(f"error: {e}")
 
 

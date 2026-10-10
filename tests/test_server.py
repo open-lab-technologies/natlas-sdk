@@ -1,27 +1,26 @@
 import json
-from pathlib import Path
 
 import pytest
 
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from natlas.client import DEFAULT_SYSTEM_PROMPT
+from natlas.defaults import SYSTEM_PROMPT as DEFAULT_SYSTEM_PROMPT
 from natlas.engine import Chunk
 from natlas.server import create_app
 
 
 class FakeEngine:
-    model_path = Path("fake.gguf")
+    name = "fake.gguf"
 
     def __init__(self):
         self.calls = []
 
-    def render(self, messages):
-        return " ".join(m["content"] for m in messages)
+    def count_prompt_tokens(self, messages):
+        return sum(len(m["content"].split()) for m in messages)
 
     def count_tokens(self, text):
-        return len(text.split()) + 1
+        return len(text.split())
 
     def generate(self, messages, **params):
         self.calls.append((messages, params))
@@ -149,3 +148,27 @@ def test_transcription_text_response_format(engine):
     resp = client.post("/v1/audio/transcriptions", files={"file": ("a.wav", b"ab")},
                        data={"language": "ha", "response_format": "text"})
     assert resp.text == "ha:2"
+
+
+class FailingEngine(FakeEngine):
+    def generate(self, messages, **params):
+        yield Chunk("Abu")
+        raise RuntimeError("GPU fell over")
+
+
+def test_engine_failure_mid_stream_is_reported_in_the_stream():
+    resp = TestClient(create_app(FailingEngine())).post("/v1/chat/completions", json={
+        "messages": [{"role": "user", "content": "x"}], "stream": True,
+    })
+    frames = [json.loads(line[6:]) for line in resp.text.splitlines()
+              if line.startswith("data: {")]
+    assert frames[1]["choices"][0]["delta"]["content"] == "Abu"
+    assert frames[-1]["error"]["message"] == "GPU fell over"
+    assert resp.text.rstrip().endswith("data: [DONE]")
+
+
+def test_engine_failure_without_stream_is_a_500():
+    client = TestClient(create_app(FailingEngine()), raise_server_exceptions=False)
+    resp = client.post("/v1/chat/completions", json={"messages": [{"role": "user", "content": "x"}]})
+    assert resp.status_code == 500
+    assert resp.json()["error"]["message"] == "RuntimeError: GPU fell over"

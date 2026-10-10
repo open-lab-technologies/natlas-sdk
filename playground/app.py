@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from natlas import LANGUAGES, NAtlas, NAtlasError
-from natlas.client import DEFAULT_SYSTEM_PROMPT
+from natlas.defaults import SYSTEM_PROMPT
 
 st.set_page_config(page_title="N-ATLAS Playground", layout="wide")
 
@@ -25,7 +25,7 @@ with st.sidebar:
     api_key = st.text_input("API key (optional)", type="password")
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
     max_tokens = st.slider("Max tokens", 32, 2048, 512, 32)
-    system = st.text_area("System prompt", DEFAULT_SYSTEM_PROMPT, height=120)
+    system = st.text_area("System prompt", SYSTEM_PROMPT, height=120)
 
 
 @st.cache_resource

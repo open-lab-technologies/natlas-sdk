@@ -11,83 +11,100 @@ import shutil
 import subprocess
 import tempfile
 import threading
-from typing import Any
+from typing import Any, Protocol
 
+from ._extras import require
 from .languages import get_language
 
 SAMPLE_RATE = 16_000
 
 
+class Transcriber(Protocol):
+    """What `natlas serve` needs from a speech backend."""
+
+    def transcribe(self, data: bytes, language: str) -> str:
+        """Audio file bytes in any supported format to text, for a language code."""
+        ...
+
+
+class AudioDecodeError(ValueError):
+    pass
+
+
+def load_audio(data: bytes) -> Any:
+    """Decode audio file bytes to a 16 kHz mono float32 numpy array.
+
+    libsndfile reads wav, flac, mp3, ogg and opus (WhatsApp voice notes) in memory.
+    It cannot read m4a (iPhone recordings) or webm (browser recorders); those go
+    through ffmpeg, which must then be installed.
+    """
+    np = require("numpy", "asr")
+    soundfile = require("soundfile", "asr")
+    try:
+        audio, rate = soundfile.read(io.BytesIO(data), dtype="float32", always_2d=True)
+    except soundfile.LibsndfileError:
+        return _ffmpeg_decode(data, np)
+    audio = audio.mean(axis=1)
+    if rate != SAMPLE_RATE:
+        audio = require("soxr", "asr").resample(audio, rate, SAMPLE_RATE)
+    return np.ascontiguousarray(audio, dtype=np.float32)
+
+
+def _ffmpeg_decode(data: bytes, np: Any) -> Any:
+    if shutil.which("ffmpeg") is None:
+        raise AudioDecodeError("Unsupported audio format; install ffmpeg to read m4a, webm and others")
+    # A temporary file rather than stdin: m4a keeps its index at the end of the
+    # file, and ffmpeg cannot seek back to it in a pipe.
+    with tempfile.NamedTemporaryFile(suffix=".audio") as src:
+        src.write(data)
+        src.flush()
+        proc = subprocess.run(
+            ["ffmpeg", "-loglevel", "error", "-i", src.name, "-f", "f32le", "-ac", "1",
+             "-ar", str(SAMPLE_RATE), "pipe:1"],
+            capture_output=True, check=False,
+        )
+    if proc.returncode != 0 or not proc.stdout:
+        detail = proc.stderr.decode(errors="replace")[:200]
+        raise AudioDecodeError(f"Could not decode audio: {detail}")
+    return np.frombuffer(proc.stdout, dtype=np.float32)
+
+
 class SpeechRecogniser:
-    """Loads one pipeline per language on first use and keeps it."""
+    """`Transcriber` backed by local Hugging Face pipelines, one per language,
+    loaded on first use and kept."""
 
     def __init__(self, device: str | None = None):
         self._device = device
         self._pipelines: dict[str, Any] = {}
         self._lock = threading.Lock()
 
-    def _pipeline(self, code: str):
+    def _pipeline(self, code: str) -> Any:
         if code not in self._pipelines:
-            import torch
-            from transformers import pipeline
-
+            torch = require("torch", "asr")
+            transformers = require("transformers", "asr")
             device = self._device or ("mps" if torch.backends.mps.is_available() else "cpu")
-            self._pipelines[code] = pipeline(
+            self._pipelines[code] = transformers.pipeline(
                 "automatic-speech-recognition",
                 model=get_language(code).asr_model,
                 device=device,
             )
         return self._pipelines[code]
 
-    @staticmethod
-    def load_audio(data: bytes):
-        """Decode audio bytes to 16 kHz mono float32.
-
-        libsndfile handles wav, mp3, ogg and opus (WhatsApp voice notes) in memory.
-        It cannot read m4a (iPhone recordings) or webm (browser recorders), so those
-        go through ffmpeg, which must then be installed.
-        """
-        import librosa
-        import numpy as np
-        import soundfile
-
-        try:
-            audio, _ = librosa.load(io.BytesIO(data), sr=SAMPLE_RATE, mono=True)
-            return audio
-        except soundfile.LibsndfileError:
-            pass
-        if shutil.which("ffmpeg") is None:
-            raise ValueError("Unsupported audio format; install ffmpeg to read m4a, webm and others")
-        # A temporary file rather than stdin: m4a keeps its index at the end of the
-        # file, and ffmpeg cannot seek back to it in a pipe.
-        with tempfile.NamedTemporaryFile(suffix=".audio") as src:
-            src.write(data)
-            src.flush()
-            proc = subprocess.run(
-                ["ffmpeg", "-loglevel", "error", "-i", src.name, "-f", "f32le", "-ac", "1",
-                 "-ar", str(SAMPLE_RATE), "pipe:1"],
-                capture_output=True, check=False,
-            )
-        if proc.returncode != 0 or not proc.stdout:
-            raise ValueError(f"Could not decode audio: {proc.stderr.decode(errors='replace')[:200]}")
-        return np.frombuffer(proc.stdout, dtype=np.float32)
-
     def transcribe(self, data: bytes, language: str) -> str:
         code = get_language(language).code
-        audio = self.load_audio(data)
+        audio = load_audio(data)
         with self._lock:
             pipe = self._pipeline(code)
             text = self._run(pipe, audio, {})
             if looks_looped(text):
-                # The speech models, Igbo especially, sometimes fall into a loop
-                # ("onye onye onye ...") that turns one sentence into hundreds of words.
-                # Banning repeated 4-grams stops it. It is only applied on a retry
-                # because it also blocks genuine repeats and costs accuracy elsewhere.
+                # The speech models, Igbo especially, can repeat one word hundreds of
+                # times. Banning repeated 4-grams stops that, but it also blocks
+                # genuine repeats and costs accuracy, so it is only used on a retry.
                 text = self._run(pipe, audio, {"no_repeat_ngram_size": 4})
         return text
 
     @staticmethod
-    def _run(pipe, audio, generate_kwargs: dict) -> str:
+    def _run(pipe: Any, audio: Any, generate_kwargs: dict[str, Any]) -> str:
         result = pipe(
             {"raw": audio, "sampling_rate": SAMPLE_RATE},
             chunk_length_s=30,

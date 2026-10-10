@@ -1,6 +1,6 @@
 [project]
 name = "natlas"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Python SDK, OpenAI-compatible server and benchmark kit for N-ATLAS, Nigeria's open multilingual LLM"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -11,6 +11,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Natural Language :: English",
 ]
@@ -18,6 +19,8 @@ dependencies = [
     "httpx>=0.27",
 ]
 
+# Extras are the runtime features users opt into. The core install is the HTTP
+# client only, so apps that call a hosted N-ATLAS endpoint pull in httpx and nothing else.
 [project.optional-dependencies]
 server = [
     "fastapi>=0.115",
@@ -29,22 +32,35 @@ server = [
 asr = [
     "transformers>=4.44",
     "torch>=2.4",
-    "librosa>=0.10",
+    "numpy>=1.24",
     "soundfile>=0.12",
-]
-playground = [
-    "streamlit>=1.40",
-    "pandas>=2.0",
+    "soxr>=0.3",
 ]
 bench = [
     "sacrebleu>=2.4",
     "jiwer>=3.0",
 ]
+
+# Contributor tooling, never installed for users.
+[dependency-groups]
 dev = [
     "pytest>=8",
+    "pytest-asyncio>=0.24",
     "respx>=0.21",
     "ruff>=0.6",
     "openai>=1.40",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+    "jinja2>=3.1",
+    "numpy>=1.24",
+    "soundfile>=0.12",
+    "soxr>=0.3",
+    {include-group = "playground"},
+]
+playground = [
+    "streamlit>=1.40",
+    "pandas>=2.0",
 ]
 
 [project.urls]
@@ -57,6 +73,9 @@ natlas = "natlas.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/natlas/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/natlas"]
@@ -73,3 +92,4 @@ extend-immutable-calls = ["fastapi.File", "fastapi.Form"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
