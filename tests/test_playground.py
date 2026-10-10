@@ -10,6 +10,8 @@ pytest.importorskip("pandas")
 from streamlit.testing.v1 import AppTest
 
 APP = str(Path(__file__).parents[1] / "playground" / "app.py")
+if not Path(APP).exists():  # source archives ship without the playground
+    pytest.skip("playground/app.py not present", allow_module_level=True)
 BASE = "http://playground-test/v1"
 
 

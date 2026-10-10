@@ -170,8 +170,11 @@ are comparable. Results go to `--out`: a `summary.md` table, `summary.json`,
 and one JSONL file per task and language with every prompt's reply, parsed
 answer and gold answer.
 
-The datasets are downloaded at run time rather than shipped with the package,
-because MAFAND is GPL-3.0. N-ATLAS was trained partly on open Hugging Face
+Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
+(Masakhane, Apache-2.0), [MAFAND-MT](https://github.com/masakhane-io/lafand-mt)
+(Masakhane, GPL-3.0) and [FLEURS](https://huggingface.co/datasets/google/fleurs)
+(Google, CC-BY-4.0). They are downloaded at run time rather than shipped with
+the package, because MAFAND is GPL-3.0. N-ATLAS was trained partly on open Hugging Face
 datasets, so some test items may have been seen in training; treat scores as
 an upper bound until that is ruled out.
 
