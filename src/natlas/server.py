@@ -7,14 +7,17 @@ when the caller does not set them, so drop-in clients get the tuned behaviour.
 
 from __future__ import annotations
 
+import hmac
+import itertools
 import json
 import time
 import uuid
 from typing import Any, Literal
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+from pydantic import BaseModel, field_validator
 
 from .client import DEFAULT_REPETITION_PENALTY, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE
 from .languages import LANGUAGES, get_language
@@ -23,8 +26,26 @@ MODEL_ID = "n-atlas"
 
 
 class ChatMessage(BaseModel):
-    role: Literal["system", "user", "assistant"]
-    content: str
+    # "developer" is what newer OpenAI SDKs send in place of "system".
+    role: Literal["system", "developer", "user", "assistant"]
+    # OpenAI clients may send content as a list of typed parts instead of a string.
+    content: str | list[dict[str, Any]]
+
+    @field_validator("content")
+    @classmethod
+    def _flatten(cls, value: str | list[dict[str, Any]]) -> str:
+        if isinstance(value, str):
+            return value
+        parts = []
+        for part in value:
+            if part.get("type") != "text":
+                raise ValueError(f"Unsupported content part {part.get('type')!r}; N-ATLAS is text-only")
+            parts.append(part.get("text", ""))
+        return "\n".join(parts)
+
+    def as_dict(self) -> dict[str, str]:
+        return {"role": "system" if self.role == "developer" else self.role,
+                "content": self.content}
 
 
 class ChatRequest(BaseModel):
@@ -38,13 +59,56 @@ class ChatRequest(BaseModel):
     stream: bool = False
 
 
-def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool = True) -> FastAPI:
+def _error(status: int, message: str) -> JSONResponse:
+    """OpenAI's error body, so OpenAI SDKs surface the message instead of a raw payload."""
+    kind = "invalid_request_error" if status < 500 else "server_error"
+    return JSONResponse({"error": {"message": message, "type": kind, "code": status}}, status)
+
+
+def create_app(
+    engine: Any,
+    asr: Any | None = None,
+    inject_system_prompt: bool = True,
+    api_key: str | None = None,
+) -> FastAPI:
     app = FastAPI(title="N-ATLAS", version="0.1.0")
+
+    @app.exception_handler(HTTPException)
+    async def http_error(_: Request, exc: HTTPException) -> JSONResponse:
+        return _error(exc.status_code, str(exc.detail))
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(_: Request, exc: RequestValidationError) -> JSONResponse:
+        first = exc.errors()[0]
+        where = ".".join(str(p) for p in first.get("loc", ()) if p != "body")
+        return _error(400, f"{where}: {first.get('msg')}" if where else first.get("msg", ""))
+
+    @app.middleware("http")
+    async def require_key(request: Request, call_next):
+        # /health stays open so load balancers and scripts can probe the server.
+        if api_key and request.url.path != "/health":
+            supplied = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+            if not hmac.compare_digest(supplied, api_key):
+                return _error(401, "Missing or invalid API key")
+        return await call_next(request)
+
+    def start(messages: list[dict[str, str]], params: dict[str, Any]):
+        """Begin generating, turning a prompt that cannot fit into a 400.
+
+        The first chunk is pulled before any response is sent, so an over-long
+        prompt fails cleanly even on a streaming request.
+        """
+        stream = engine.generate(messages, **params)
+        try:
+            first = next(stream, None)
+        except ValueError as e:  # llama.cpp: "Requested tokens ... exceed context window"
+            raise HTTPException(400, str(e)) from e
+        return first, stream
 
     def prepare(req: ChatRequest) -> list[dict[str, str]]:
         if not req.messages:
             raise HTTPException(400, "messages must not be empty")
-        messages = [m.model_dump() for m in req.messages]
+        messages = [m.as_dict() for m in req.messages]
         if inject_system_prompt and messages[0]["role"] != "system":
             messages.insert(0, {"role": "system", "content": DEFAULT_SYSTEM_PROMPT})
         return messages
@@ -75,6 +139,9 @@ def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool =
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
         created = int(time.time())
 
+        first, rest = start(messages, params)
+        chunks = itertools.chain([first] if first else [], rest)
+
         if req.stream:
             def events():
                 def frame(delta: dict, finish: str | None) -> str:
@@ -87,7 +154,7 @@ def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool =
 
                 yield frame({"role": "assistant"}, None)
                 finish = "stop"
-                for chunk in engine.generate(messages, **params):
+                for chunk in chunks:
                     if chunk.text:
                         yield frame({"content": chunk.text}, None)
                     finish = chunk.finish_reason or finish
@@ -97,12 +164,12 @@ def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool =
             return StreamingResponse(events(), media_type="text/event-stream")
 
         parts, finish = [], "stop"
-        for chunk in engine.generate(messages, **params):
+        for chunk in chunks:
             parts.append(chunk.text)
             finish = chunk.finish_reason or finish
         text = "".join(parts).strip()
         prompt_tokens = engine.count_tokens(engine.render(messages))
-        completion_tokens = engine.count_tokens(text) - 1
+        completion_tokens = engine.count_tokens(text) - 1  # count_tokens includes BOS
         return {
             "id": completion_id,
             "object": "chat.completion",
@@ -123,11 +190,19 @@ def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool =
     @app.post("/v1/audio/transcriptions")
     def transcriptions(
         file: UploadFile = File(...),
-        language: str = Form(...),
+        language: str | None = Form(None),
         model: str | None = Form(None),
+        response_format: str = Form("json"),
     ):
         if asr is None:
             raise HTTPException(501, "Speech recognition is off. Start the server with --asr.")
+        # The OpenAI SDK sends `model` but `language` is optional there, so the
+        # language can also come from naming one of the N-ATLAS speech models.
+        if language is None and model:
+            language = next((l.code for l in LANGUAGES.values() if l.asr_model == model), None)
+        if language is None:
+            names = ", ".join(l.asr_model for l in LANGUAGES.values())
+            raise HTTPException(400, f"Set language (en, ha, ig, yo) or model to one of {names}")
         try:
             lang = get_language(language)
         except ValueError as e:
@@ -139,6 +214,8 @@ def create_app(engine: Any, asr: Any | None = None, inject_system_prompt: bool =
             text = asr.transcribe(data, lang.code)
         except Exception as e:  # decoding errors from librosa/ffmpeg surface here
             raise HTTPException(422, f"Could not transcribe audio: {e}") from e
+        if response_format == "text":
+            return PlainTextResponse(text)
         return JSONResponse({"text": text, "language": lang.code})
 
     return app

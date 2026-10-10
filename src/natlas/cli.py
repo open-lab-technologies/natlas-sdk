@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 
 from .client import NAtlas, NAtlasError
@@ -22,8 +23,13 @@ def _serve(args: argparse.Namespace) -> None:
         from .asr import SpeechRecogniser
 
         asr = SpeechRecogniser()
+    api_key = args.api_key or os.getenv("NATLAS_API_KEY")
+    if not api_key and args.host not in ("127.0.0.1", "localhost", "::1"):
+        print(f"warning: serving on {args.host} with no API key; anyone who can reach this "
+              "machine can use the model. Set --api-key or NATLAS_API_KEY.", file=sys.stderr)
     print(f"Serving {engine.model_path.name} on http://{args.host}:{args.port}/v1", file=sys.stderr)
-    uvicorn.run(create_app(engine, asr), host=args.host, port=args.port, log_level="warning")
+    uvicorn.run(create_app(engine, asr, api_key=api_key), host=args.host, port=args.port,
+                log_level="warning")
 
 
 def _chat(args: argparse.Namespace) -> None:
@@ -84,6 +90,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--port", type=int, default=8000)
     p.add_argument("--ctx", type=int, default=8192, help="Context window in tokens")
     p.add_argument("--asr", action="store_true", help="Enable /v1/audio/transcriptions")
+    p.add_argument("--api-key", help="Require this bearer token (default: $NATLAS_API_KEY)")
 
     p = sub.add_parser("chat", help="Chat in the terminal, or answer one prompt")
     p.add_argument("prompt", nargs="*")
