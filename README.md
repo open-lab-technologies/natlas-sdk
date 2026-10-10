@@ -1,117 +1,175 @@
 # natlas
 
-Python SDK, OpenAI-compatible server and benchmark kit for
-[N-ATLAS](https://huggingface.co/NCAIR1/N-ATLaS), Nigeria's open multilingual
-language model (Llama-3 8B fine-tuned for English, Hausa, Igbo and Yoruba).
+Python SDK for [N-ATLAS](https://huggingface.co/NCAIR1/N-ATLaS), Nigeria's open
+multilingual language model (Llama-3 8B fine-tuned for English, Hausa, Igbo and
+Yoruba), with its official speech recognition models.
 
-- **`NAtlas` client**: chat, streaming, translation and speech to text against any
-  endpoint serving N-ATLAS.
-- **`natlas serve`**: runs N-ATLAS on your own machine behind the OpenAI API, so
-  existing OpenAI-based code switches to N-ATLAS by changing one URL.
-- **`natlas bench`**: scores any N-ATLAS endpoint on public Nigerian-language
-  benchmarks (IrokoBench and MAFAND), with every model reply saved for inspection.
+The client works with any OpenAI-compatible endpoint serving N-ATLAS: the
+bundled `natlas serve`, vLLM, llama.cpp's server, Ollama, or a hosted API. It
+sends standard OpenAI requests, so switching provider means changing a URL.
 
 ## Install
 
 ```bash
-pip install "natlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
+pip install "natlas @ git+https://github.com/Nazehs/natlas-sdk"
 ```
 
-Extras: `server` (local inference with llama.cpp), `asr` (speech to text),
-`bench` (benchmarks), `dev` (tests and lint). Python 3.10 or newer.
+The base install is the HTTP client and nothing else. Add extras only for the
+features you run yourself:
 
-On Apple Silicon, build llama.cpp with Metal so the model runs on the GPU:
+| Install | Adds | Installed size |
+|---|---|---|
+| `natlas` | Sync and async clients | 2.5 MB (httpx) |
+| `natlas[server]` | `natlas serve`: run N-ATLAS locally behind the OpenAI API | 109 MB |
+| `natlas[asr]` | Local speech recognition for `natlas serve --asr` | 690 MB, mostly PyTorch |
+| `natlas[bench]` | `natlas bench`: score any endpoint on public benchmarks | 51 MB |
 
-```bash
-CMAKE_ARGS="-DGGML_METAL=on" pip install "natlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
-```
-
-With an NVIDIA GPU use `CMAKE_ARGS="-DGGML_CUDA=on"` instead.
+Python 3.10 or newer. `import natlas` loads only httpx, and a missing extra
+fails with the `pip install` command that fixes it.
 
 ## Quick start
-
-```bash
-natlas download          # 4.9 GB, 4-bit quantised weights
-natlas serve             # http://127.0.0.1:8000/v1
-```
 
 ```python
 from natlas import NAtlas
 
-client = NAtlas()  # or NAtlas(base_url=..., api_key=...)
+client = NAtlas(base_url="http://localhost:8000/v1")  # or set NATLAS_BASE_URL
 
 print(client.chat("Kí ni olú ìlú Nàìjíríà?"))
 # Olú ìlú Nàìjíríà ni Abuja.
 
-for token in client.stream("Ka bayyana mini menene noma a takaice"):
-    print(token, end="", flush=True)
+for piece in client.stream("Ka bayyana mini menene noma a takaice"):
+    print(piece, end="", flush=True)
 
 client.translate("Wash your hands before eating.", to="ig")
+client.transcribe("voice-note.ogg", language="ha")
 ```
 
-The client applies the system prompt and sampling settings from the N-ATLAS
-model card (temperature 0.1, repetition penalty 1.12) unless you pass your own.
-Without that system prompt the model's answers drift towards generic Llama-3.
-
-### Use it from existing OpenAI code
-
-```python
-from openai import OpenAI
-
-client = OpenAI(base_url="http://localhost:8000/v1", api_key="unused")
-reply = client.chat.completions.create(
-    model="n-atlas",
-    messages=[{"role": "user", "content": "What is the capital of Nigeria?"}],
-)
-```
-
-Streaming, list-style message content and the `developer` role all work, so
-current OpenAI and LangChain clients need no changes. The server adds the
-N-ATLAS system prompt when a request has none.
-
-### Sharing a server
-
-`natlas serve` listens on localhost only. To let others use it, bind to a
-reachable address and require a key:
+No endpoint yet? Run one on your own machine:
 
 ```bash
-natlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"
+pip install "natlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
+natlas download          # 4.9 GB, 4-bit weights, hash-checked
+natlas serve             # http://127.0.0.1:8000/v1
 ```
 
-Clients send the key as a bearer token (`NATLAS_API_KEY` for this SDK, `api_key=`
-for the OpenAI client). `/health` stays open for monitoring.
+On Apple Silicon, install with `CMAKE_ARGS="-DGGML_METAL=on"` so the model runs
+on the GPU; with an NVIDIA GPU use `CMAKE_ARGS="-DGGML_CUDA=on"`.
+
+## Using the client
+
+### Async
+
+`AsyncNAtlas` has the same methods as coroutines:
+
+```python
+import asyncio
+from natlas import AsyncNAtlas
+
+async def main():
+    async with AsyncNAtlas() as client:
+        replies = await asyncio.gather(
+            client.chat("Capital of Nigeria?"),
+            client.chat("Babban birnin Najeriya?"),
+        )
+        async for piece in client.stream("Sannu!"):
+            print(piece, end="")
+
+asyncio.run(main())
+```
+
+### Choosing a provider
+
+| Provider | `base_url` | `model` |
+|---|---|---|
+| `natlas serve` | `http://localhost:8000/v1` | `n-atlas` (default) |
+| vLLM serving the official weights | `http://host:8000/v1` | `NCAIR1/N-ATLaS` |
+| llama.cpp server | `http://host:8080/v1` | the `--model_alias` you set |
+| Ollama with an imported GGUF | `http://localhost:11434/v1` | the tag you created |
+
+Set them per client (`NAtlas(base_url=..., model=...)`) or with
+`NATLAS_BASE_URL` and `NATLAS_MODEL`. The client is tested end to end against
+`natlas serve` and llama.cpp's server; the others follow the same OpenAI API.
+
+The client applies the N-ATLAS model card's system prompt and temperature 0.1.
+Pass `system_prompt=None` to the client, or your own `system=` per call, to
+change that. Keyword arguments `chat()` does not know go into the request body
+unchanged, for provider-specific options:
+
+```python
+client.chat("Sannu", repetition_penalty=1.12)  # vLLM; llama.cpp calls it repeat_penalty
+```
+
+`natlas serve` applies the model card's repetition penalty (1.12) itself, so
+there is nothing to pass there.
+
+### Errors and retries
+
+Connection failures and 408, 409, 429 and 5xx responses are retried with
+backoff (`max_retries=2` by default), honouring `Retry-After`. What still fails
+raises a subclass of `NAtlasError`:
+
+| Exception | When |
+|---|---|
+| `APIConnectionError`, `APITimeoutError` | The endpoint could not be reached, or took longer than `timeout` |
+| `BadRequestError` | 400 or 422, including a prompt longer than the context window |
+| `AuthenticationError` | 401 or 403 |
+| `NotFoundError` | 404: wrong URL, or the endpoint lacks the feature (speech, for instance) |
+| `RateLimitError`, `InternalServerError` | 429 or 5xx after the retries |
+
+Every status error carries `status_code` and the parsed error `body`. A stream
+that fails part-way raises rather than retrying, so no text is duplicated.
 
 ### Speech to text
 
-```bash
-pip install "natlas[server,asr] @ git+https://github.com/Nazehs/natlas-sdk"
-natlas serve --asr
-natlas transcribe voice-note.ogg --language yo
-```
+`transcribe()` takes a file path or the file's bytes and needs an endpoint with
+`/v1/audio/transcriptions`, such as `natlas serve --asr`:
 
 ```python
 heard = client.transcribe("voice-note.ogg", language="ha")
 answer = client.chat(heard)
 ```
 
-On an Apple Silicon laptop a WhatsApp voice note takes about a second to
-transcribe once the model is loaded, and about a second more for the answer.
+wav, flac, mp3, ogg and opus (WhatsApp voice notes) decode directly. m4a
+(iPhone recordings) and webm (browser recorders) need ffmpeg on the server.
 
-This uses the official N-ATLAS speech models (`NCAIR1/Yoruba-ASR`, `Igbo-ASR`,
-`Hausa-ASR`, `NigerianAccentedEnglish`). They are gated: logging in is not
-enough, you also have to click "Agree and access repository" on each model page
-on Hugging Face, then run `hf auth login`.
+The speech models are the official N-ATLAS ones (`NCAIR1/Yoruba-ASR`,
+`Igbo-ASR`, `Hausa-ASR`, `NigerianAccentedEnglish`). They are gated: logging in
+is not enough, you also have to click "Agree and access repository" on each
+model page on Hugging Face, then run `hf auth login` where the server runs.
 
-wav, mp3, ogg and opus (WhatsApp voice notes) decode directly. m4a (iPhone
-recordings) and webm (browser recorders) need ffmpeg installed.
+## Running N-ATLAS locally
 
-The OpenAI client's `audio.transcriptions.create` works too: pass
-`model="NCAIR1/Hausa-ASR"` (or another speech model) and the language follows
-from it.
+`natlas serve` puts a GGUF build behind the OpenAI API, so existing OpenAI code
+works unchanged:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8000/v1", api_key="unused")
+client.chat.completions.create(model="n-atlas",
+                               messages=[{"role": "user", "content": "Sannu!"}])
+```
+
+Streaming, list-style message content and the `developer` role work, as
+current OpenAI clients send them. The OpenAI client's
+`audio.transcriptions.create` works too: pass `model="NCAIR1/Hausa-ASR"` (or
+another speech model) and the language follows from it.
+
+It listens on localhost only. To share it, bind to a reachable address and
+require a key, which clients send as a bearer token:
+
+```bash
+natlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"
+```
+
+`/health` stays open for monitoring. The server handles one request at a time;
+for concurrent users, serve the official weights with vLLM instead.
+
+To put the server in front of a different inference backend, implement the
+`Engine` protocol in `natlas.engine` (three methods) and pass it to
+`natlas.server.create_app`. Speech backends implement `natlas.asr.Transcriber`.
 
 ## Examples
-
-Run these against `natlas serve` (add `--asr` for the voice example):
 
 | Script | Shows |
 |---|---|
@@ -121,12 +179,12 @@ Run these against `natlas serve` (add `--asr` for the voice example):
 ## Playground
 
 A browser playground for trying prompts, translation and voice input, and for
-reading benchmark results reply by reply. It lives in the repository rather
-than the package, so run it from a clone:
+reading benchmark results reply by reply. It is a development tool, not part of
+the package, so run it from a clone:
 
 ```bash
 git clone https://github.com/Nazehs/natlas-sdk && cd natlas-sdk
-pip install -e ".[playground]"
+uv venv && uv pip install -e . --group playground
 streamlit run playground/app.py
 ```
 
@@ -141,17 +199,21 @@ streamlit run playground/app.py
 | `natlas transcribe file --language ha` | Speech to text |
 | `natlas bench [-n 100] [--tasks ...]` | Run the benchmark suite |
 
-Every command except `serve` and `download` talks to `--base-url`, so it works
-against a remote or hosted N-ATLAS endpoint as well as a local one.
+`--base-url` and `--model` point every command except `serve` and `download` at
+any endpoint.
 
 ## Configuration
 
 | Variable | Default | Used for |
 |---|---|---|
 | `NATLAS_BASE_URL` | `http://localhost:8000/v1` | Endpoint the client talks to |
+| `NATLAS_MODEL` | `n-atlas` | Model name sent with each request |
 | `NATLAS_API_KEY` | none | Bearer token the client sends, and the key `natlas serve` requires |
 | `NATLAS_MODEL_PATH` | downloaded `--quant` | GGUF file for `natlas serve` |
 | `NATLAS_CACHE` | `~/.cache/natlas` | Downloaded weights and benchmark data |
+
+The client logs retries to the `natlas` logger and benchmark item failures to
+`natlas.bench`.
 
 ## Benchmarks
 
@@ -174,8 +236,8 @@ Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
 (Masakhane, Apache-2.0), [MAFAND-MT](https://github.com/masakhane-io/lafand-mt)
 (Masakhane, GPL-3.0) and [FLEURS](https://huggingface.co/datasets/google/fleurs)
 (Google, CC-BY-4.0). They are downloaded at run time rather than shipped with
-the package, because MAFAND is GPL-3.0. N-ATLAS was trained partly on open Hugging Face
-datasets, so some test items may have been seen in training; treat scores as
+the package, because MAFAND is GPL-3.0. N-ATLAS was trained partly on open
+Hugging Face datasets, so some test items may have been seen in training; treat scores as
 an upper bound until that is ruled out.
 
 ### Results: N-ATLAS 4-bit (Q4_K_M), llama.cpp on Apple Silicon
@@ -218,9 +280,9 @@ Word error rate, so lower is better.
   while the model writes them ("àwọn ìròyìn"), so the strict Yoruba score
   overstates the error. The second row strips diacritics from both sides.
 - FLEURS has no Nigerian-accented English; English is scored on US speakers.
-- The Igbo model sometimes loops on one word ("onye onye onye ..."). The SDK
-  detects that and re-decodes with repeated phrases banned, which took Igbo WER
-  from 65.7% to 43.8% without changing the other languages.
+- The Igbo model sometimes loops on one word ("onye onye onye ..."). The server
+  detects that and re-decodes with repeated phrases banned; without that retry,
+  Igbo WER on this set is 65.7%.
 
 Reproduce with:
 
@@ -228,55 +290,43 @@ Reproduce with:
 natlas bench -n 100 --seed 0 --out bench-results/my-run
 ```
 
+## Known limitations
+
+What testing found that is the model's behaviour or outside this package:
+
+- Yoruba output is the weakest. Translation into Yoruba scores lowest, and
+  free-form Yoruba answers are often incoherent and drop tone marks, in line
+  with the model card's own human evaluation.
+- Nigerian-language accuracy trails English on every benchmark, most on
+  knowledge and maths.
+- Speech error rates are high outside English: about 31% WER for Hausa, 37% for
+  Igbo and 29% for Yoruba, ignoring tone marks.
+- Possible test contamination: N-ATLAS was trained partly on open datasets, so
+  some benchmark items may have been seen in training.
+- Small quantisations break. Q2_K failed to translate in testing; use Q4_K_M or
+  larger.
+- The GGUF weights are a community conversion, not published by NCAIR. They are
+  pinned to a revision and hash-checked, but provenance rests on QuantFactory.
+
 ## Model notes
 
 `natlas download` fetches a community GGUF conversion
 ([QuantFactory/N-ATLaS-GGUF](https://huggingface.co/QuantFactory/N-ATLaS-GGUF))
 of the official weights, pinned to a fixed revision and checked against the
-SHA-256 Hugging Face publishes. Interrupted downloads resume. The official repository ships only full-precision
-safetensors, which need about 16 GB of GPU memory. To serve those, run vLLM or
-another OpenAI-compatible server and point the client at it.
-
-Use Q4_K_M (the default) or larger. Smaller builds lose real quality: in
-testing, Q2_K returned the English input unchanged when asked to translate it
-into Hausa, where Q4_K_M translated it correctly.
-
-The chat template stamps today's date into every prompt. llama.cpp's own chat
-formatting leaves that date at the template default, so `natlas serve` renders
-the template itself.
-
-## Known limitations
-
-What testing found that is not fixed, because it is the model's behaviour or
-outside this package:
-
-- **Yoruba output is the weakest.** Translation into Yoruba scores lowest, and
-  free-form Yoruba answers are often incoherent and drop tone marks, in line
-  with the model card's own human evaluation.
-- **Nigerian-language accuracy trails English** on every benchmark, most on
-  knowledge and maths.
-- **Speech error rates are high outside English**: about 31% WER for Hausa and
-  37% for Igbo, 29% for Yoruba ignoring tone marks.
-- **Possible test contamination.** N-ATLAS was trained partly on open datasets,
-  so some benchmark items may have been seen in training.
-- **One request at a time.** `natlas serve` runs one llama.cpp model and
-  serialises requests; for concurrent users serve the official weights with
-  vLLM and point the client at it.
-- **Small quantisations break.** Q2_K failed to translate in testing; use
-  Q4_K_M or larger.
-- **Weights are a community conversion.** The GGUF files are not published by
-  NCAIR. They are pinned and hash-checked, but provenance rests on QuantFactory.
+SHA-256 Hugging Face publishes. Interrupted downloads resume. The official
+repository ships only full-precision safetensors, which need about 16 GB of
+GPU memory; serve those with vLLM and point the client at it.
 
 ## Development
 
 ```bash
-uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,bench,asr,dev]"
+uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,asr,bench]" --group dev
 pytest
-ruff check src tests playground
+ruff check src tests playground examples
 ```
 
-`pytest` runs the unit tests, which need no model and are what CI runs. The
-end-to-end tests in `tests/test_live.py` exercise a running server in all four
+`pytest` runs the unit tests, which use fakes and need no model; they are what
+CI runs. `tests/test_live.py` exercises a running server end to end in all four
 languages, through this SDK and the official OpenAI client, including speech in
 phone and browser formats:
 
