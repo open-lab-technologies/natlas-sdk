@@ -1,4 +1,9 @@
-"""Local inference for N-ATLAS GGUF builds through llama.cpp."""
+"""Inference backends for `natlas serve`.
+
+The server talks to any object that satisfies `Engine`. `LlamaCppEngine` runs
+GGUF builds of N-ATLAS through llama.cpp; other backends only need to
+implement the same three methods.
+"""
 
 from __future__ import annotations
 
@@ -7,11 +12,11 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Protocol
 
-# The N-ATLAS template is Llama-3.1's, which stamps today's date into the system
-# header. llama.cpp's built-in formatter leaves the date at the template default,
-# so the template is rendered here instead.
-EOT = "<|eot_id|>"
+from ._extras import require
+
+Messages = list[dict[str, str]]
 
 
 @dataclass
@@ -20,27 +25,56 @@ class Chunk:
     finish_reason: str | None = None
 
 
+class Engine(Protocol):
+    name: str
+
+    def generate(
+        self,
+        messages: Messages,
+        *,
+        temperature: float,
+        max_tokens: int,
+        repetition_penalty: float,
+        top_p: float,
+        stop: list[str],
+    ) -> Iterator[Chunk]:
+        """Stream the reply. Raise ValueError if the prompt cannot fit the context."""
+        ...
+
+    def count_prompt_tokens(self, messages: Messages) -> int: ...
+
+    def count_tokens(self, text: str) -> int: ...
+
+
 class LlamaCppEngine:
+    EOT = "<|eot_id|>"
+
     def __init__(self, model_path: str | Path, n_ctx: int = 8192, n_gpu_layers: int = -1):
-        from jinja2.sandbox import ImmutableSandboxedEnvironment
-        from llama_cpp import Llama
+        llama_cpp = require("llama_cpp", "server")
+        sandbox = require("jinja2.sandbox", "server")
 
         path = Path(model_path).expanduser()
         if not path.exists():
             raise FileNotFoundError(f"Model file not found: {path}. Run `natlas download` first.")
-        self.model_path = path
-        self.llm = Llama(
+        self.name = path.name
+        self.llm = llama_cpp.Llama(
             model_path=str(path), n_ctx=n_ctx, n_gpu_layers=n_gpu_layers, verbose=False
         )
         template = self.llm.metadata.get("tokenizer.chat_template")
         if not template:
             raise ValueError(f"{path.name} has no chat template in its metadata")
-        env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+        env = sandbox.ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
         self._template = env.from_string(template)
         # llama.cpp is not safe to call from several threads at once.
         self._lock = threading.Lock()
 
-    def render(self, messages: list[dict[str, str]]) -> str:
+    def render(self, messages: Messages) -> str:
+        """Apply the model's chat template.
+
+        Rendered here rather than by llama.cpp because the N-ATLAS template stamps
+        today's date into the system header, and llama.cpp's formatter leaves it at
+        the template's placeholder.
+        """
         return self._template.render(
             messages=messages,
             add_generation_prompt=True,
@@ -49,11 +83,14 @@ class LlamaCppEngine:
         )
 
     def count_tokens(self, text: str) -> int:
-        return len(self.llm.tokenize(text.encode(), add_bos=True, special=True))
+        return len(self.llm.tokenize(text.encode(), add_bos=False, special=True))
+
+    def count_prompt_tokens(self, messages: Messages) -> int:
+        return self.count_tokens(self.render(messages)) + 1  # plus BOS
 
     def generate(
         self,
-        messages: list[dict[str, str]],
+        messages: Messages,
         *,
         temperature: float,
         max_tokens: int,
@@ -63,11 +100,9 @@ class LlamaCppEngine:
     ) -> Iterator[Chunk]:
         prompt = self.render(messages)
         with self._lock:
-            # llama.cpp reuses the cached prefix of the previous prompt. Evaluating
-            # only the remainder changes the floating-point results enough to flip
-            # near-tied tokens, so the same request at temperature 0 answered
-            # differently depending on what came before it. Clearing the cache makes
-            # replies, and benchmark scores, independent of request order.
+            # Start from an empty cache. Reusing the previous prompt's cached prefix
+            # changes the arithmetic enough to flip near-tied tokens, which would make
+            # a temperature-0 reply depend on the request before it.
             self.llm.reset()
             for out in self.llm.create_completion(
                 prompt,
@@ -75,7 +110,7 @@ class LlamaCppEngine:
                 temperature=temperature,
                 top_p=top_p,
                 repeat_penalty=repetition_penalty,
-                stop=[EOT, *(stop or [])],
+                stop=[self.EOT, *(stop or [])],
                 stream=True,
             ):
                 choice = out["choices"][0]

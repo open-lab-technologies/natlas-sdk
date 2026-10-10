@@ -1,8 +1,8 @@
-"""OpenAI-compatible HTTP server for a local N-ATLAS model.
+"""OpenAI-compatible HTTP server in front of an `Engine` and, optionally, a `Transcriber`.
 
-Any OpenAI client, LangChain, LlamaIndex or plain curl can point at it by
-changing the base URL. N-ATLAS sampling defaults and system prompt are applied
-when the caller does not set them, so drop-in clients get the tuned behaviour.
+Any OpenAI client can point at it by changing the base URL. The N-ATLAS system
+prompt and sampling settings apply when a request does not set its own, so
+drop-in clients get the behaviour the model was tuned for.
 """
 
 from __future__ import annotations
@@ -14,12 +14,18 @@ import time
 import uuid
 from typing import Any, Literal
 
+from ._extras import require
+
+require("fastapi", "server")
+
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, field_validator
 
-from .client import DEFAULT_REPETITION_PENALTY, DEFAULT_SYSTEM_PROMPT, DEFAULT_TEMPERATURE
+from . import __version__, defaults
+from .asr import Transcriber
+from .engine import Engine
 from .languages import LANGUAGES, get_language
 
 MODEL_ID = "n-atlas"
@@ -51,10 +57,10 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     model: str = MODEL_ID
     messages: list[ChatMessage]
-    temperature: float = DEFAULT_TEMPERATURE
+    temperature: float = defaults.TEMPERATURE
     top_p: float = 0.95
     max_tokens: int | None = 512
-    repetition_penalty: float = DEFAULT_REPETITION_PENALTY
+    repetition_penalty: float = defaults.REPETITION_PENALTY
     stop: str | list[str] | None = None
     stream: bool = False
 
@@ -66,12 +72,12 @@ def _error(status: int, message: str) -> JSONResponse:
 
 
 def create_app(
-    engine: Any,
-    asr: Any | None = None,
+    engine: Engine,
+    asr: Transcriber | None = None,
     inject_system_prompt: bool = True,
     api_key: str | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="N-ATLAS", version="0.1.0")
+    app = FastAPI(title="N-ATLAS", version=__version__)
 
     @app.exception_handler(HTTPException)
     async def http_error(_: Request, exc: HTTPException) -> JSONResponse:
@@ -110,12 +116,12 @@ def create_app(
             raise HTTPException(400, "messages must not be empty")
         messages = [m.as_dict() for m in req.messages]
         if inject_system_prompt and messages[0]["role"] != "system":
-            messages.insert(0, {"role": "system", "content": DEFAULT_SYSTEM_PROMPT})
+            messages.insert(0, {"role": "system", "content": defaults.SYSTEM_PROMPT})
         return messages
 
     @app.get("/health")
     def health() -> dict[str, Any]:
-        return {"status": "ok", "model": engine.model_path.name, "asr": asr is not None}
+        return {"status": "ok", "model": engine.name, "asr": asr is not None}
 
     @app.get("/v1/models")
     def models() -> dict[str, Any]:
@@ -168,8 +174,8 @@ def create_app(
             parts.append(chunk.text)
             finish = chunk.finish_reason or finish
         text = "".join(parts).strip()
-        prompt_tokens = engine.count_tokens(engine.render(messages))
-        completion_tokens = engine.count_tokens(text) - 1  # count_tokens includes BOS
+        prompt_tokens = engine.count_prompt_tokens(messages)
+        completion_tokens = engine.count_tokens(text)
         return {
             "id": completion_id,
             "object": "chat.completion",

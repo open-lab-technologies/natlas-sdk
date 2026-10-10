@@ -1,27 +1,26 @@
 import json
-from pathlib import Path
 
 import pytest
 
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from natlas.client import DEFAULT_SYSTEM_PROMPT
+from natlas.defaults import SYSTEM_PROMPT as DEFAULT_SYSTEM_PROMPT
 from natlas.engine import Chunk
 from natlas.server import create_app
 
 
 class FakeEngine:
-    model_path = Path("fake.gguf")
+    name = "fake.gguf"
 
     def __init__(self):
         self.calls = []
 
-    def render(self, messages):
-        return " ".join(m["content"] for m in messages)
+    def count_prompt_tokens(self, messages):
+        return sum(len(m["content"].split()) for m in messages)
 
     def count_tokens(self, text):
-        return len(text.split()) + 1
+        return len(text.split())
 
     def generate(self, messages, **params):
         self.calls.append((messages, params))
