@@ -1,0 +1,10 @@
+{"id": "tools-ig-0", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "osikapa", "market": "Onitsha"}, "outcome": "correct"}
+{"id": "tools-ig-1", "reply": "", "expected": "find_health_centre", "called": "find_health_centre", "arguments": {"town": "Enugu"}, "outcome": "correct"}
+{"id": "tools-ig-2", "reply": "\"Chetara m ịṅụ ọgwụ m n'elekere asatọ nke abalị.\"", "expected": "set_reminder", "called": null, "arguments": null, "outcome": "missed_call"}
+{"id": "tools-ig-3", "reply": "", "expected": "get_football_score", "called": "get_football_score", "arguments": {"team": "Enyimba"}, "outcome": "correct"}
+{"id": "tools-ig-4", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "tomato", "market": "Ariaria"}, "outcome": "correct"}
+{"id": "tools-ig-5", "reply": "Ọ dị mma, biko nye m ozi ndị ọzọ ma ọ bụ nkọwa gbasara nzukọ ahụ ka m wee nwee ike inyere gị aka nke ọma.", "expected": "set_reminder", "called": null, "arguments": null, "outcome": "missed_call"}
+{"id": "tools-ig-6", "reply": "Ndidi bụ àgwà dị mkpa nke na-enyere aka ịmepụta mmekọrịta siri ike, na-eme ka a hụ ndị mmadụ n'anya. Ndị mmadụ na-adịghị enwe mmetụta na-echebe ma na-atụkwasị obi, na-enye ohere maka uto onwe onye na nke otu.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-ig-7", "reply": "Sannu! I'm doing well, thanks for asking. How can I assist you today?", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-ig-8", "reply": "Okwu 'udo' pụtara nke ọma bụ \"nwere udo.\"", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-ig-9", "reply": "Ịba bụ ọrịa na-efe efe nke na-eme site na nje virus, nke a na-ahụkarị site na ọkụ, uzere, ikwu ọnụ, anya na-acha uhie uhie, na ike.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}

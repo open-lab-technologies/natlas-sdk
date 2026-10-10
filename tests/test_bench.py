@@ -83,3 +83,28 @@ def test_looks_looped(text, looped):
 def test_wer_ignoring_tones():
     assert scoring.wer(["àwọn ìròyìn"], ["Awon iroyin"]) == 1.0
     assert scoring.wer(["àwọn ìròyìn"], ["Awon iroyin"], ignore_tones=True) == 0
+
+
+def test_tool_cases_load_for_every_language():
+    for lang in ("en", "ha", "ig", "yo"):
+        items = data.tool_calling(lang)
+        assert len(items) == 10
+        assert sum(bool(i.gold) for i in items) == 6
+        names = {t["function"]["name"] for t in items[0].meta["tools"]}
+        assert {i.gold for i in items if i.gold} <= names
+
+
+@pytest.mark.parametrize(("called", "arguments", "expected", "accepted", "outcome"), [
+    ("get_market_price", {"commodity": "Rice", "market": "Kano market"}, "get_market_price",
+     {"commodity": ["rice"], "market": ["kano"]}, "correct"),
+    ("find_health_centre", {"town": "Ibadan"}, "find_health_centre", {"town": ["ìbàdàn"]},
+     "correct"),
+    ("set_reminder", {"message": "medicine", "time": "9pm"}, "set_reminder",
+     {"message": ["medicine"], "time": ["8"]}, "wrong_arguments"),
+    ("get_football_score", {}, "set_reminder", {}, "wrong_tool"),
+    ("get_football_score", {}, "", None, "false_call"),
+    (None, {}, "set_reminder", {}, "missed_call"),
+    (None, {}, "", None, "correct"),
+])
+def test_tool_call_outcome(called, arguments, expected, accepted, outcome):
+    assert scoring.tool_call_outcome(called, arguments, expected, accepted) == outcome

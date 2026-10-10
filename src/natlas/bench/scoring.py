@@ -80,3 +80,24 @@ def wer(hypotheses: list[str], references: list[str], ignore_tones: bool = False
         return strip_tone_marks(text) if ignore_tones else text
 
     return jiwer.wer([prep(r) for r in references], [prep(h) for h in hypotheses])
+
+
+def tool_call_outcome(called: str | None, arguments: dict, expected: str,
+                      expected_arguments: dict | None) -> str:
+    """One of "correct", "false_call", "missed_call", "wrong_tool" or "wrong_arguments".
+
+    `expected` is "" when no tool should be called. An argument matches when its
+    value contains any accepted form, ignoring case and tone marks, so "Kano
+    market" matches "kano" and "Ibadan" matches "Ìbàdàn".
+    """
+    if not expected:
+        return "false_call" if called else "correct"
+    if not called:
+        return "missed_call"
+    if called != expected:
+        return "wrong_tool"
+    for key, accepted in (expected_arguments or {}).items():
+        value = strip_tone_marks(str(arguments.get(key, "")).lower())
+        if not any(strip_tone_marks(form.lower()) in value for form in accepted):
+            return "wrong_arguments"
+    return "correct"

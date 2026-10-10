@@ -7,6 +7,7 @@ from __future__ import annotations
 import ast
 import csv
 import io
+import json
 import random
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -186,3 +187,21 @@ class _StreamReader(io.RawIOBase):
         size = min(len(b), len(self._buffer))
         b[:size], self._buffer = self._buffer[:size], self._buffer[size:]
         return size
+
+
+def tool_calling(lang: str) -> list[Item]:
+    """Requests that do and do not need one of four tools.
+
+    Written for this package, with tools and questions that played no part in
+    designing the tool-calling prompt, so the scores are out of sample. The
+    Hausa, Igbo and Yoruba questions have not been reviewed by native speakers.
+    """
+    import importlib.resources
+
+    spec = json.loads(importlib.resources.files(__package__).joinpath("tool_cases.json")
+                      .read_text(encoding="utf-8"))
+    return [
+        Item(f"tools-{lang}-{i}", prompt, name or "",
+             {"tools": spec["tools"], "arguments": arguments})
+        for i, (prompt, name, arguments) in enumerate(spec["cases"][lang])
+    ]

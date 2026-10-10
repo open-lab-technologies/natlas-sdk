@@ -1,0 +1,10 @@
+{"id": "tools-yo-0", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "ìrẹsì", "market": "Ọjà Ọ̀yìngbò"}, "outcome": "correct"}
+{"id": "tools-yo-1", "reply": "", "expected": "find_health_centre", "called": "find_health_centre", "arguments": {"town": "Ibadan"}, "outcome": "correct"}
+{"id": "tools-yo-2", "reply": "", "expected": "set_reminder", "called": "set_reminder", "arguments": {"message": "Rán mi létí látí látí lo oñgún mi", "time": "agogo mẹ́jọ alẹ́"}, "outcome": "wrong_arguments"}
+{"id": "tools-yo-3", "reply": "", "expected": "get_football_score", "called": "get_football_score", "arguments": {"team": "Shooting Stars"}, "outcome": "correct"}
+{"id": "tools-yo-4", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "tòmátì", "market": "ọjà Bódìjà"}, "outcome": "correct"}
+{"id": "tools-yo-5", "reply": "", "expected": "set_reminder", "called": "set_reminder", "arguments": {"message": "Rán mi létí ápádé ọ̀la", "time": "agogo mẹ́wàá òwúrọ̀"}, "outcome": "wrong_arguments"}
+{"id": "tools-yo-6", "reply": "Sùúrù jẹ́ ọgbọn tó dára, kì í ṣe àìlera.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-yo-7", "reply": "Báwo ni! Bawo ni mo ṣe le ran ọ lọwọ loni?", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-yo-8", "reply": "Ọ̀rọ̀ 'àlàáfíà' túmọ̀ sí àìsí ogun, ìjà tàbí ìkà. Nínú ọ̀ràn mìíràn, ó lè jẹ́ pé kò ní ìṣòro tàbí ìdààmú.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-yo-9", "reply": "Ṣùgbọ́n, mo lè ràn é lọwọ láti ṣàlàyé àwọn ìmọ̀ tó ní í ṣe pẹ̀lú ibà. Tí o bá ń wá ìtumọ̀ kan pato fún \"ibà,\" jọwọ fi àkóónú diẹ síi kó lè ràn é lọwọ!", "expected": null, "called": null, "arguments": null, "outcome": "correct"}

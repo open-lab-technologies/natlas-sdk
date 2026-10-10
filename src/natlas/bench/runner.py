@@ -23,10 +23,11 @@ class Task:
     languages: tuple[str, ...]
     load: Callable[[str], list[data.Item]]
     max_tokens: int
-    metric: str  # "accuracy", "chrf" or "wer"
+    metric: str  # "accuracy", "chrf", "wer" or "tool-calls"
     parse: Callable[[str], str | None] | None = None
     chance: float | None = None  # score from guessing, to read results against
     audio: bool = False  # items carry an audio file to transcribe instead of a prompt
+    tools: bool = False  # items carry tool definitions and the call expected
 
 
 TASKS: dict[str, Task] = {
@@ -42,7 +43,11 @@ TASKS: dict[str, Task] = {
                      "chrf"),
     "asr-fleurs": Task("asr-fleurs", ("en", "ha", "ig", "yo"), data.fleurs, 0, "wer",
                        audio=True),
+    "tool-calling": Task("tool-calling", ("en", "ha", "ig", "yo"), data.tool_calling, 200,
+                         "tool-calls", tools=True),
 }
+
+OUTCOMES = ("false_call", "missed_call", "wrong_tool", "wrong_arguments")
 
 
 def _correct(task: Task, parsed: str | None, gold: str) -> bool:
@@ -89,8 +94,14 @@ def run(
             failures = 0
             t0 = time.time()
             for k, item in enumerate(items, 1):
+                call = None
                 try:
-                    if task.audio:
+                    if task.tools:
+                        response = client.chat(item.prompt, tools=item.meta["tools"],
+                                               temperature=0.0, max_tokens=task.max_tokens)
+                        call = response.tool_calls[0] if response.tool_calls else None
+                        reply = response.text
+                    elif task.audio:
                         reply = client.transcribe(item.meta["audio"], language=lang)
                     else:
                         reply = client.chat(item.prompt, temperature=0.0,
@@ -99,7 +110,13 @@ def run(
                     reply, failures = "", failures + 1
                     log.warning("%s failed: %s", item.id, e)
                 row = {"id": item.id, "reply": reply}
-                if task.metric == "accuracy":
+                if task.tools:
+                    row["expected"] = item.gold or None
+                    row["called"] = call.name if call else None
+                    row["arguments"] = call.arguments if call else None
+                    row["outcome"] = scoring.tool_call_outcome(
+                        row["called"], row["arguments"] or {}, item.gold, item.meta["arguments"])
+                elif task.metric == "accuracy":
                     row["gold"] = item.gold
                     row["parsed"] = task.parse(reply)
                     row["correct"] = _correct(task, row["parsed"], item.gold)
@@ -119,7 +136,11 @@ def run(
 
             result = {"task": name, "language": lang, "n": len(items), "metric": task.metric,
                       "errors": failures, "seconds": round(time.time() - t0, 1)}
-            if task.metric == "accuracy":
+            if task.tools:
+                result["score"] = round(
+                    100 * sum(r["outcome"] == "correct" for r in rows) / len(rows), 1)
+                result.update({o: sum(r["outcome"] == o for r in rows) for o in OUTCOMES})
+            elif task.metric == "accuracy":
                 result["score"] = round(100 * sum(r["correct"] for r in rows) / len(rows), 1)
                 result["unparsed"] = sum(r["parsed"] is None for r in rows)
                 if task.chance:
