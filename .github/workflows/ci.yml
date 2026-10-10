@@ -19,8 +19,8 @@ jobs:
         # never load a model, and building llama.cpp would add minutes per run.
         run: |
           uv venv --python ${{ matrix.python }}
-          uv pip install -e ".[bench,dev]" fastapi python-multipart
+          uv pip install -e ".[bench,dev,playground]" fastapi python-multipart
       - name: Lint
-        run: uv run --no-sync ruff check src tests playground
+        run: uv run --no-sync ruff check src tests playground examples
       - name: Test
         run: uv run --no-sync pytest -q

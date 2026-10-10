@@ -1,7 +1,7 @@
 {
   "label": "N-ATLaS Q4_K_M (llama.cpp, Apple GPU)",
   "endpoint": "http://localhost:8000/v1",
-  "started": "2026-10-09T08:19:59+00:00",
+  "started": "2026-10-10T17:48:33+00:00",
   "n_per_language": 100,
   "seed": 0,
   "results": [
@@ -11,7 +11,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 33.4,
+      "seconds": 70.4,
       "score": 53.0,
       "unparsed": 0,
       "chance": 25.0
@@ -22,7 +22,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 51.1,
+      "seconds": 72.8,
       "score": 35.0,
       "unparsed": 0,
       "chance": 25.0
@@ -33,7 +33,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 51.3,
+      "seconds": 72.5,
       "score": 41.0,
       "unparsed": 0,
       "chance": 25.0
@@ -44,7 +44,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 75.7,
+      "seconds": 83.2,
       "score": 37.0,
       "unparsed": 0,
       "chance": 25.0
@@ -55,8 +55,8 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 22.9,
-      "score": 70.0,
+      "seconds": 48.3,
+      "score": 69.0,
       "unparsed": 0,
       "chance": 33.3
     },
@@ -66,7 +66,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 29.8,
+      "seconds": 55.9,
       "score": 58.0,
       "unparsed": 0,
       "chance": 33.3
@@ -77,7 +77,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 33.9,
+      "seconds": 60.2,
       "score": 57.0,
       "unparsed": 0,
       "chance": 33.3
@@ -88,7 +88,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 37.0,
+      "seconds": 63.9,
       "score": 53.0,
       "unparsed": 0,
       "chance": 33.3
@@ -99,8 +99,8 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 638.6,
-      "score": 70.0,
+      "seconds": 620.1,
+      "score": 69.0,
       "unparsed": 0
     },
     {
@@ -109,8 +109,8 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 1154.2,
-      "score": 42.0,
+      "seconds": 885.6,
+      "score": 43.0,
       "unparsed": 0
     },
     {
@@ -119,8 +119,8 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 1284.4,
-      "score": 34.0,
+      "seconds": 920.6,
+      "score": 36.0,
       "unparsed": 0
     },
     {
@@ -129,7 +129,7 @@
       "n": 100,
       "metric": "accuracy",
       "errors": 0,
-      "seconds": 1242.0,
+      "seconds": 972.3,
       "score": 40.0,
       "unparsed": 0
     },
@@ -139,7 +139,7 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 177.3,
+      "seconds": 174.0,
       "score": 33.7
     },
     {
@@ -148,8 +148,8 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 135.3,
-      "score": 41.1
+      "seconds": 141.7,
+      "score": 41.0
     },
     {
       "task": "mt-en-xx",
@@ -157,7 +157,7 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 266.0,
+      "seconds": 268.7,
       "score": 28.0
     },
     {
@@ -166,8 +166,8 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 121.5,
-      "score": 37.5
+      "seconds": 143.2,
+      "score": 37.4
     },
     {
       "task": "mt-xx-en",
@@ -175,7 +175,7 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 83.9,
+      "seconds": 104.5,
       "score": 40.7
     },
     {
@@ -184,9 +184,9 @@
       "n": 100,
       "metric": "chrf",
       "errors": 0,
-      "seconds": 133.7,
-      "score": 41.8
+      "seconds": 150.4,
+      "score": 41.7
     }
   ],
-  "finished": "2026-10-09T09:52:51+00:00"
+  "finished": "2026-10-10T19:10:22+00:00"
 }

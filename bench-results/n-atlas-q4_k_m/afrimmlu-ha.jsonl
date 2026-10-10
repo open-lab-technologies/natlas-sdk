@@ -1,100 +1,100 @@
-{"id": "afrimmlu-ha-0", "gold": "C", "reply": "B. p = 8", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-7", "gold": "B", "reply": "D. 12.72", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-20", "gold": "C", "reply": "D. 16", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-31", "gold": "B", "reply": "B. 15 da ragowar", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-32", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-37", "gold": "D", "reply": "B. p+3", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-41", "gold": "D", "reply": "A. w > 2.3", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-46", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-47", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-48", "gold": "D", "reply": "D. 840,000", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-50", "gold": "A", "reply": "C. tsuntsaye 42", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-51", "gold": "B", "reply": "C. 131", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-55", "gold": "A", "reply": "B. 10", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-71", "gold": "A", "reply": "B. 240", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-72", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-75", "gold": "D", "reply": "D. SSSSSSSS;", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-97", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
-{"id": "afrimmlu-ha-104", "gold": "D", "reply": "A. Mata da yawa suna", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-111", "gold": "B", "reply": "B", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-113", "gold": "D", "reply": "A. Iyakar da ba", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-122", "gold": "D", "reply": "B. Yahudanci da Buddha", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-124", "gold": "B", "reply": "A. Mulkin kama-karya", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-128", "gold": "C", "reply": "C. Na ɗabi'a", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-132", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-133", "gold": "D", "reply": "D. Rarrabuwa da", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-144", "gold": "D", "reply": "B. Ravenstein", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-149", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-154", "gold": "D", "reply": "D. Mongoliya", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-155", "gold": "C", "reply": "C. Na uku", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-158", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-161", "gold": "B", "reply": "B. Juyin Juya Hal", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-163", "gold": "D", "reply": "D", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-166", "gold": "D", "reply": "D. Soyayya", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-169", "gold": "C", "reply": "D. ƙa'idar", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-170", "gold": "B", "reply": "B. Ɗan Shi'a", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-181", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-183", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-197", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-204", "gold": "B", "reply": "A. Wajibi ne na sak", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-207", "gold": "B", "reply": "B. Yana nufin sam", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-215", "gold": "B", "reply": "B. Yarjejeniyar she", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-222", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-226", "gold": "C", "reply": "D. Burin ta shine ta sam", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-229", "gold": "C", "reply": "D. Kotun ta ce kula", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-241", "gold": "B", "reply": "B. Dokokin gwamnati", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-244", "gold": "C", "reply": "C. Yankin da ake", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-248", "gold": "A", "reply": "C. Yarda na buƙ", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-250", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-252", "gold": "C", "reply": "B. A tsari, Kotun", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-258", "gold": "A", "reply": "D. A lokutan da ake", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-260", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
-{"id": "afrimmlu-ha-261", "gold": "C", "reply": "C. Ƙasar da ta", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-266", "gold": "B", "reply": "C. Ƙasashe", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-272", "gold": "C", "reply": "D. Ba a kula da rund", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-278", "gold": "B", "reply": "A. Amincewa da gw", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-280", "gold": "B", "reply": "D. Hukumar ta ECHR", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-282", "gold": "C", "reply": "C. Rashin dokoki na ai", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-286", "gold": "A", "reply": "C. Tsayar da shari'o", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-290", "gold": "A", "reply": "A. Matakan magancewar ba", "parsed": "A", "correct": true}
-{"id": "afrimmlu-ha-298", "gold": "C", "reply": "B", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-308", "gold": "C", "reply": "B. 38%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-312", "gold": "C", "reply": "C. 9%", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-313", "gold": "A", "reply": "B. Chanjin mallakin ƙ", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-316", "gold": "A", "reply": "B. 49%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-320", "gold": "A", "reply": "B. 45%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-327", "gold": "C", "reply": "B. 43%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-342", "gold": "C", "reply": "D. Iran", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-350", "gold": "B", "reply": "B. 2%", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-360", "gold": "C", "reply": "C. Miliyan 150", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-361", "gold": "A", "reply": "D. Bhutan, Cambodia, Uruguay", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-363", "gold": "C", "reply": "B. 58%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-368", "gold": "C", "reply": "B. 69%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-373", "gold": "C", "reply": "B. $1,000", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-386", "gold": "C", "reply": "B. 56%", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-388", "gold": "C", "reply": "C. $35,000", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-401", "gold": "C", "reply": "D. rage jarin da kuma", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-409", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-411", "gold": "C", "reply": "A. farashi yana tashi,", "parsed": "A", "correct": false}
-{"id": "afrimmlu-ha-412", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-414", "gold": "B", "reply": "B. shuka da kayan a", "parsed": "B", "correct": true}
-{"id": "afrimmlu-ha-422", "gold": "B", "reply": "D", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-423", "gold": "D", "reply": "B", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-424", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-430", "gold": "D", "reply": "D. Jason zai tsaft", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-432", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
-{"id": "afrimmlu-ha-435", "gold": "A", "reply": "D. karin farashi yayin", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-443", "gold": "C", "reply": "D", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-447", "gold": "C", "reply": "B", "parsed": "B", "correct": false}
-{"id": "afrimmlu-ha-455", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-456", "gold": "B", "reply": "D. I da III", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-461", "gold": "A", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-464", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-465", "gold": "D", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-467", "gold": "A", "reply": "D. samun karin buk", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-468", "gold": "D", "reply": "D. samun yawan ma'a", "parsed": "D", "correct": true}
-{"id": "afrimmlu-ha-470", "gold": "B", "reply": "D. fasaha a wajen", "parsed": "D", "correct": false}
-{"id": "afrimmlu-ha-478", "gold": "B", "reply": "C", "parsed": "C", "correct": false}
-{"id": "afrimmlu-ha-485", "gold": "C", "reply": "C", "parsed": "C", "correct": true}
-{"id": "afrimmlu-ha-488", "gold": "A", "reply": "A", "parsed": "A", "correct": true}
-{"id": "afrimmlu-ha-489", "gold": "D", "reply": "B", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-0", "reply": "B. p = 8", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-7", "reply": "D. 12.72", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-20", "reply": "D. 16", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-31", "reply": "B. 15 da ragowar", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-32", "reply": "C", "gold": "A", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-37", "reply": "B. p+3", "gold": "D", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-41", "reply": "A. w > 2.3", "gold": "D", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-46", "reply": "C", "gold": "D", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-47", "reply": "C", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-48", "reply": "D. 840,000", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-50", "reply": "C. tsuntsaye 42", "gold": "A", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-51", "reply": "C. 131", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-55", "reply": "B. 10", "gold": "A", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-71", "reply": "B. 240", "gold": "A", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-72", "reply": "D", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-75", "reply": "D. SSSSSSSS;", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-97", "reply": "A", "gold": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ha-104", "reply": "A. Mata da yawa suna", "gold": "D", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-111", "reply": "B", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-113", "reply": "A. Iyakar da ba", "gold": "D", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-122", "reply": "B. Yahudanci da Buddha", "gold": "D", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-124", "reply": "A. Mulkin kama-karya", "gold": "B", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-128", "reply": "C. Na ɗabi'a", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-132", "reply": "C", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-133", "reply": "D. Rarrabuwa da", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-144", "reply": "B. Ravenstein", "gold": "D", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-149", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-154", "reply": "D. Mongoliya", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-155", "reply": "C. Na uku", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-158", "reply": "D", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-161", "reply": "B. Juyin Juya Hal", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-163", "reply": "D", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-166", "reply": "D. Soyayya", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-169", "reply": "D. ƙa'idar", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-170", "reply": "B. Ɗan Shi'a", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-181", "reply": "D", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-183", "reply": "C", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-197", "reply": "C", "gold": "D", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-204", "reply": "A. Wajibi ne na sak", "gold": "B", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-207", "reply": "B. Yana nufin sam", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-215", "reply": "B. Yarjejeniyar she", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-222", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-226", "reply": "D. Burin ta shine ta sam", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-229", "reply": "D. Kotun ta ce kula", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-241", "reply": "B. Dokokin gwamnati", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-244", "reply": "C. Yankin da ake", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-248", "reply": "C. Yarda na buƙ", "gold": "A", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-250", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-252", "reply": "B. A tsari, Kotun", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-258", "reply": "D. A lokutan da ake", "gold": "A", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-260", "reply": "A", "gold": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ha-261", "reply": "C. Ƙasar da ta", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-266", "reply": "C. Ƙasashe", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-272", "reply": "D. Ba a kula da rund", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-278", "reply": "A. Amincewa da gw", "gold": "B", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-280", "reply": "D. Hukumar ta ECHR", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-282", "reply": "C. Rashin dokoki na ai", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-286", "reply": "C. Tsayar da shari'o", "gold": "A", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-290", "reply": "A. Matakan magancewar ba", "gold": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ha-298", "reply": "B", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-308", "reply": "B. 38%", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-312", "reply": "C. 9%", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-313", "reply": "B. Chanjin mallakin ƙ", "gold": "A", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-316", "reply": "B. 49%", "gold": "A", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-320", "reply": "B. 45%", "gold": "A", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-327", "reply": "B. 43%", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-342", "reply": "D. Iran", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-350", "reply": "B. 2%", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-360", "reply": "C. Miliyan 150", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-361", "reply": "D. Bhutan, Cambodia, Uruguay", "gold": "A", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-363", "reply": "B. 58%", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-368", "reply": "B. 69%", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-373", "reply": "B. $1,000", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-386", "reply": "B. 56%", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-388", "reply": "C. $35,000", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-401", "reply": "D. rage jarin da kuma", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-409", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-411", "reply": "A. farashi yana tashi,", "gold": "C", "parsed": "A", "correct": false}
+{"id": "afrimmlu-ha-412", "reply": "C", "gold": "D", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-414", "reply": "B. shuka da kayan a", "gold": "B", "parsed": "B", "correct": true}
+{"id": "afrimmlu-ha-422", "reply": "D", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-423", "reply": "B", "gold": "D", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-424", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-430", "reply": "D. Jason zai tsaft", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-432", "reply": "A", "gold": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ha-435", "reply": "D. karin farashi yayin", "gold": "A", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-443", "reply": "D", "gold": "C", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-447", "reply": "B", "gold": "C", "parsed": "B", "correct": false}
+{"id": "afrimmlu-ha-455", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-456", "reply": "D. I da III", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-461", "reply": "C", "gold": "A", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-464", "reply": "C", "gold": "D", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-465", "reply": "C", "gold": "D", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-467", "reply": "D. samun karin buk", "gold": "A", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-468", "reply": "D. samun yawan ma'a", "gold": "D", "parsed": "D", "correct": true}
+{"id": "afrimmlu-ha-470", "reply": "D. fasaha a wajen", "gold": "B", "parsed": "D", "correct": false}
+{"id": "afrimmlu-ha-478", "reply": "C", "gold": "B", "parsed": "C", "correct": false}
+{"id": "afrimmlu-ha-485", "reply": "C", "gold": "C", "parsed": "C", "correct": true}
+{"id": "afrimmlu-ha-488", "reply": "A", "gold": "A", "parsed": "A", "correct": true}
+{"id": "afrimmlu-ha-489", "reply": "B", "gold": "D", "parsed": "B", "correct": false}

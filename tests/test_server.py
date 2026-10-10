@@ -87,3 +87,65 @@ def test_transcription_with_asr(engine):
         "/v1/audio/transcriptions", files={"file": ("a.wav", b"abc")}, data={"language": "fr"}
     )
     assert bad.status_code == 400
+
+
+def test_accepts_content_parts_and_developer_role(engine):
+    client = TestClient(create_app(engine))
+    resp = client.post("/v1/chat/completions", json={"messages": [
+        {"role": "developer", "content": "Be brief."},
+        {"role": "user", "content": [{"type": "text", "text": "capital"},
+                                     {"type": "text", "text": "of Nigeria?"}]},
+    ]})
+    assert resp.status_code == 200
+    messages, _ = engine.calls[0]
+    assert messages[0] == {"role": "system", "content": "Be brief."}
+    assert messages[1] == {"role": "user", "content": "capital\nof Nigeria?"}
+
+
+def test_errors_use_openai_shape(engine):
+    resp = TestClient(create_app(engine)).post("/v1/chat/completions", json={"messages": []})
+    assert resp.status_code == 400
+    assert resp.json()["error"]["message"] == "messages must not be empty"
+
+
+class OverflowEngine(FakeEngine):
+    def generate(self, messages, **params):
+        raise ValueError("Requested tokens (9000) exceed context window of 8192")
+        yield  # pragma: no cover
+
+
+def test_context_overflow_is_a_client_error():
+    resp = TestClient(create_app(OverflowEngine())).post(
+        "/v1/chat/completions", json={"messages": [{"role": "user", "content": "x"}]}
+    )
+    assert resp.status_code == 400
+    assert "context window" in resp.json()["error"]["message"]
+
+
+def test_api_key_required_when_set(engine):
+    client = TestClient(create_app(engine, api_key="s3cret"))
+    body = {"messages": [{"role": "user", "content": "hi"}]}
+    assert client.post("/v1/chat/completions", json=body).status_code == 401
+    wrong = {"Authorization": "Bearer nope"}
+    assert client.post("/v1/chat/completions", json=body, headers=wrong).status_code == 401
+    ok = {"Authorization": "Bearer s3cret"}
+    assert client.post("/v1/chat/completions", json=body, headers=ok).status_code == 200
+    assert client.get("/health").status_code == 200  # health stays open for probes
+
+
+def test_transcription_language_from_model_name(engine):
+    client = TestClient(create_app(engine, asr=FakeASR()))
+    resp = client.post("/v1/audio/transcriptions", files={"file": ("a.wav", b"abcd")},
+                       data={"model": "NCAIR1/Yoruba-ASR"})
+    assert resp.json()["text"] == "yo:4"
+    missing = client.post("/v1/audio/transcriptions", files={"file": ("a.wav", b"abcd")},
+                          data={"model": "whisper-1"})
+    assert missing.status_code == 400
+    assert "language" in missing.json()["error"]["message"]
+
+
+def test_transcription_text_response_format(engine):
+    client = TestClient(create_app(engine, asr=FakeASR()))
+    resp = client.post("/v1/audio/transcriptions", files={"file": ("a.wav", b"ab")},
+                       data={"language": "ha", "response_format": "text"})
+    assert resp.text == "ha:2"

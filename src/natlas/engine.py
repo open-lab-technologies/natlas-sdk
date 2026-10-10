@@ -63,6 +63,12 @@ class LlamaCppEngine:
     ) -> Iterator[Chunk]:
         prompt = self.render(messages)
         with self._lock:
+            # llama.cpp reuses the cached prefix of the previous prompt. Evaluating
+            # only the remainder changes the floating-point results enough to flip
+            # near-tied tokens, so the same request at temperature 0 answered
+            # differently depending on what came before it. Clearing the cache makes
+            # replies, and benchmark scores, independent of request order.
+            self.llm.reset()
             for out in self.llm.create_completion(
                 prompt,
                 max_tokens=max_tokens,
