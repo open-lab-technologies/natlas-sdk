@@ -181,15 +181,17 @@ an upper bound until that is ruled out.
 ### Results: N-ATLAS 4-bit (Q4_K_M), llama.cpp on Apple Silicon
 
 100 items per language per task, seed 0, temperature 0. Full replies in
-[bench-results/n-atlas-q4_k_m](bench-results/n-atlas-q4_k_m/).
+[bench-results/n-atlas-q4_k_m](bench-results/n-atlas-q4_k_m/). Runs are
+reproducible: repeating a run, or asking the same items in a different order,
+gives identical replies.
 
 | Task | Metric | English | Hausa | Igbo | Yoruba | Chance |
 |---|---|---:|---:|---:|---:|---:|
 | AfriMMLU | accuracy % | 53 | 35 | 41 | 37 | 25 |
-| AfriXNLI | accuracy % | 70 | 58 | 57 | 53 | 33 |
-| AfriMGSM | accuracy % | 70 | 42 | 34 | 40 | |
-| MAFAND English to language | chrF++ | | 33.7 | 41.1 | 28.0 | |
-| MAFAND language to English | chrF++ | | 37.5 | 40.7 | 41.8 | |
+| AfriXNLI | accuracy % | 69 | 58 | 57 | 53 | 33 |
+| AfriMGSM | accuracy % | 69 | 43 | 36 | 40 | |
+| MAFAND English to language | chrF++ | | 33.7 | 41.0 | 28.0 | |
+| MAFAND language to English | chrF++ | | 37.4 | 40.7 | 41.7 | |
 
 How to read this:
 
