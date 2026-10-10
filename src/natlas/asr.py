@@ -7,6 +7,9 @@ log in with `hf auth login` before first use.
 from __future__ import annotations
 
 import io
+import shutil
+import subprocess
+import tempfile
 import threading
 from typing import Any
 
@@ -38,11 +41,36 @@ class SpeechRecogniser:
 
     @staticmethod
     def load_audio(data: bytes):
-        """Decode any format ffmpeg or libsndfile understands (WhatsApp .ogg/.opus included)."""
-        import librosa
+        """Decode audio bytes to 16 kHz mono float32.
 
-        audio, _ = librosa.load(io.BytesIO(data), sr=SAMPLE_RATE, mono=True)
-        return audio
+        libsndfile handles wav, mp3, ogg and opus (WhatsApp voice notes) in memory.
+        It cannot read m4a (iPhone recordings) or webm (browser recorders), so those
+        go through ffmpeg, which must then be installed.
+        """
+        import librosa
+        import numpy as np
+        import soundfile
+
+        try:
+            audio, _ = librosa.load(io.BytesIO(data), sr=SAMPLE_RATE, mono=True)
+            return audio
+        except soundfile.LibsndfileError:
+            pass
+        if shutil.which("ffmpeg") is None:
+            raise ValueError("Unsupported audio format; install ffmpeg to read m4a, webm and others")
+        # A temporary file rather than stdin: m4a keeps its index at the end of the
+        # file, and ffmpeg cannot seek back to it in a pipe.
+        with tempfile.NamedTemporaryFile(suffix=".audio") as src:
+            src.write(data)
+            src.flush()
+            proc = subprocess.run(
+                ["ffmpeg", "-loglevel", "error", "-i", src.name, "-f", "f32le", "-ac", "1",
+                 "-ar", str(SAMPLE_RATE), "pipe:1"],
+                capture_output=True, check=False,
+            )
+        if proc.returncode != 0 or not proc.stdout:
+            raise ValueError(f"Could not decode audio: {proc.stderr.decode(errors='replace')[:200]}")
+        return np.frombuffer(proc.stdout, dtype=np.float32)
 
     def transcribe(self, data: bytes, language: str) -> str:
         code = get_language(language).code
