@@ -65,8 +65,21 @@ reply = client.chat.completions.create(
 )
 ```
 
-Streaming (`stream=True`) works too. The server adds the N-ATLAS system prompt
-when a request has none.
+Streaming, list-style message content and the `developer` role all work, so
+current OpenAI and LangChain clients need no changes. The server adds the
+N-ATLAS system prompt when a request has none.
+
+### Sharing a server
+
+`natlas serve` listens on localhost only. To let others use it, bind to a
+reachable address and require a key:
+
+```bash
+natlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"
+```
+
+Clients send the key as a bearer token (`NATLAS_API_KEY` for this SDK, `api_key=`
+for the OpenAI client). `/health` stays open for monitoring.
 
 ### Speech to text
 
@@ -85,17 +98,35 @@ On an Apple Silicon laptop a WhatsApp voice note takes about a second to
 transcribe once the model is loaded, and about a second more for the answer.
 
 This uses the official N-ATLAS speech models (`NCAIR1/Yoruba-ASR`, `Igbo-ASR`,
-`Hausa-ASR`, `NigerianAccentedEnglish`). They are gated: accept the terms on
-each model page on Hugging Face, then run `hf auth login`. Any format ffmpeg can
-decode works, including WhatsApp voice notes.
+`Hausa-ASR`, `NigerianAccentedEnglish`). They are gated: logging in is not
+enough, you also have to click "Agree and access repository" on each model page
+on Hugging Face, then run `hf auth login`.
+
+wav, mp3, ogg and opus (WhatsApp voice notes) decode directly. m4a (iPhone
+recordings) and webm (browser recorders) need ffmpeg installed.
+
+The OpenAI client's `audio.transcriptions.create` works too: pass
+`model="NCAIR1/Hausa-ASR"` (or another speech model) and the language follows
+from it.
+
+## Examples
+
+Run these against `natlas serve` (add `--asr` for the voice example):
+
+| Script | Shows |
+|---|---|
+| [examples/openai_drop_in.py](examples/openai_drop_in.py) | Unchanged OpenAI code answering in all four languages |
+| [examples/voice_assistant.py](examples/voice_assistant.py) | A voice note transcribed and answered in the same language |
 
 ## Playground
 
 A browser playground for trying prompts, translation and voice input, and for
-reading benchmark results reply by reply:
+reading benchmark results reply by reply. It lives in the repository rather
+than the package, so run it from a clone:
 
 ```bash
-pip install "natlas[playground] @ git+https://github.com/Nazehs/natlas-sdk"
+git clone https://github.com/Nazehs/natlas-sdk && cd natlas-sdk
+pip install -e ".[playground]"
 streamlit run playground/app.py
 ```
 
@@ -104,7 +135,7 @@ streamlit run playground/app.py
 | Command | What it does |
 |---|---|
 | `natlas download [--quant Q4_K_M]` | Download quantised weights (Q2_K to Q8_0) |
-| `natlas serve [--asr] [--port 8000]` | OpenAI-compatible server on a local model |
+| `natlas serve [--asr] [--api-key KEY] [--port 8000]` | OpenAI-compatible server on a local model |
 | `natlas chat ["prompt"]` | Interactive chat, or answer one prompt |
 | `natlas translate "text" --to yo [--from en]` | Translate between en, ha, ig, yo |
 | `natlas transcribe file --language ha` | Speech to text |
@@ -118,7 +149,7 @@ against a remote or hosted N-ATLAS endpoint as well as a local one.
 | Variable | Default | Used for |
 |---|---|---|
 | `NATLAS_BASE_URL` | `http://localhost:8000/v1` | Endpoint the client talks to |
-| `NATLAS_API_KEY` | none | Sent as a bearer token if set |
+| `NATLAS_API_KEY` | none | Bearer token the client sends, and the key `natlas serve` requires |
 | `NATLAS_MODEL_PATH` | downloaded `--quant` | GGUF file for `natlas serve` |
 | `NATLAS_CACHE` | `~/.cache/natlas` | Downloaded weights and benchmark data |
 
@@ -196,7 +227,8 @@ natlas bench -n 100 --seed 0 --out bench-results/my-run
 
 `natlas download` fetches a community GGUF conversion
 ([QuantFactory/N-ATLaS-GGUF](https://huggingface.co/QuantFactory/N-ATLaS-GGUF))
-of the official weights. The official repository ships only full-precision
+of the official weights, pinned to a fixed revision and checked against the
+SHA-256 Hugging Face publishes. Interrupted downloads resume. The official repository ships only full-precision
 safetensors, which need about 16 GB of GPU memory. To serve those, run vLLM or
 another OpenAI-compatible server and point the client at it.
 
@@ -208,12 +240,44 @@ The chat template stamps today's date into every prompt. llama.cpp's own chat
 formatting leaves that date at the template default, so `natlas serve` renders
 the template itself.
 
+## Known limitations
+
+What testing found that is not fixed, because it is the model's behaviour or
+outside this package:
+
+- **Yoruba output is the weakest.** Translation into Yoruba scores lowest, and
+  free-form Yoruba answers are often incoherent and drop tone marks, in line
+  with the model card's own human evaluation.
+- **Nigerian-language accuracy trails English** on every benchmark, most on
+  knowledge and maths.
+- **Speech error rates are high outside English**: about 31% WER for Hausa and
+  37% for Igbo, 29% for Yoruba ignoring tone marks.
+- **Possible test contamination.** N-ATLAS was trained partly on open datasets,
+  so some benchmark items may have been seen in training.
+- **One request at a time.** `natlas serve` runs one llama.cpp model and
+  serialises requests; for concurrent users serve the official weights with
+  vLLM and point the client at it.
+- **Small quantisations break.** Q2_K failed to translate in testing; use
+  Q4_K_M or larger.
+- **Weights are a community conversion.** The GGUF files are not published by
+  NCAIR. They are pinned and hash-checked, but provenance rests on QuantFactory.
+
 ## Development
 
 ```bash
 uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,bench,asr,dev]"
 pytest
-ruff check src tests
+ruff check src tests playground
+```
+
+`pytest` runs the unit tests, which need no model and are what CI runs. The
+end-to-end tests in `tests/test_live.py` exercise a running server in all four
+languages, through this SDK and the official OpenAI client, including speech in
+phone and browser formats:
+
+```bash
+natlas serve --asr --api-key test-key
+NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests/test_live.py
 ```
 
 ## Licence
