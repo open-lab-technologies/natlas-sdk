@@ -15,11 +15,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - name: Install
-        # llama-cpp-python and torch are left out: the tests use a fake engine and
-        # never load a model, and building llama.cpp would add minutes per run.
+        # llama-cpp-python and torch are left out: the tests use fakes and never
+        # load a model, and building llama.cpp would add minutes per run.
         run: |
           uv venv --python ${{ matrix.python }}
-          uv pip install -e ".[bench,dev,playground]" fastapi python-multipart
+          uv pip install -e ".[bench]" --group dev
       - name: Lint
         run: uv run --no-sync ruff check src tests playground examples
       - name: Test
