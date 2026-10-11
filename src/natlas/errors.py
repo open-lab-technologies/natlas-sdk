@@ -63,3 +63,19 @@ def status_error(status: int, message: str, body: Any = None) -> APIStatusError:
     else:
         cls = APIStatusError
     return cls(message, status, body)
+
+
+class StructuredOutputError(NAtlasError):
+    """The reply did not match the requested `response_format`. `text` is the raw reply.
+
+    Endpoints that enforce the schema while generating, such as `natlas serve`,
+    vLLM and llama.cpp's server, should not produce this; others may.
+    """
+
+    def __init__(self, message: str, text: str):
+        super().__init__(message)
+        self.text = text
+
+
+class ToolLoopError(NAtlasError):
+    """`run_tools` reached `max_rounds` with the model still calling tools."""

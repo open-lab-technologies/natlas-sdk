@@ -1,0 +1,62 @@
+{
+  "label": "N-ATLaS Q4_K_M tool calling (held-out)",
+  "endpoint": "http://localhost:8000/v1",
+  "started": "2026-10-10T22:09:34+00:00",
+  "n_per_language": null,
+  "seed": 0,
+  "results": [
+    {
+      "task": "tool-calling",
+      "language": "en",
+      "n": 10,
+      "metric": "tool-calls",
+      "errors": 0,
+      "seconds": 24.3,
+      "score": 100.0,
+      "false_call": 0,
+      "missed_call": 0,
+      "wrong_tool": 0,
+      "wrong_arguments": 0
+    },
+    {
+      "task": "tool-calling",
+      "language": "ha",
+      "n": 10,
+      "metric": "tool-calls",
+      "errors": 0,
+      "seconds": 32.0,
+      "score": 90.0,
+      "false_call": 1,
+      "missed_call": 0,
+      "wrong_tool": 0,
+      "wrong_arguments": 0
+    },
+    {
+      "task": "tool-calling",
+      "language": "ig",
+      "n": 10,
+      "metric": "tool-calls",
+      "errors": 0,
+      "seconds": 28.9,
+      "score": 80.0,
+      "false_call": 0,
+      "missed_call": 2,
+      "wrong_tool": 0,
+      "wrong_arguments": 0
+    },
+    {
+      "task": "tool-calling",
+      "language": "yo",
+      "n": 10,
+      "metric": "tool-calls",
+      "errors": 0,
+      "seconds": 32.2,
+      "score": 80.0,
+      "false_call": 0,
+      "missed_call": 0,
+      "wrong_tool": 0,
+      "wrong_arguments": 2
+    }
+  ],
+  "finished": "2026-10-10T22:11:31+00:00"
+}

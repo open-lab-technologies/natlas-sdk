@@ -1,8 +1,9 @@
 # natlas
 
-Python SDK for N-ATLAS. Layout: `src/natlas/` (client, errors, defaults, server,
-engine, asr, models, cli, bench/), `playground/` (Streamlit, not packaged),
-`examples/`, `bench-results/` (published runs).
+Python SDK for N-ATLAS. Layout: `src/natlas/` (client, types, tools, errors,
+settings, defaults, server, _toolcalls, engine, asr, models, cli, bench/),
+`playground/` (Streamlit, not packaged), `examples/`, `bench-results/`
+(published runs).
 
 ## Commands
 
@@ -30,6 +31,18 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
   strict OpenAI-compatible APIs reject unknown fields.
 - `NAtlas` and `AsyncNAtlas` share request building and parsing in `_Base`.
   Change behaviour there, not in one client.
+- Configuration goes through `Settings.from_env()`, which validates once and
+  names the variable in `ConfigError`. Do not read `NATLAS_*` with `os.getenv`
+  elsewhere, and keep the API key out of reprs and messages.
+- Pydantic is never imported by the client. A Pydantic model passed as
+  `response_format` or a tool parameter is used through its own methods.
+- Every tool decision is generated under a JSON schema listing only the real
+  tools, plus `{"name": "none"}` in auto mode, with tools in the system message.
+  Free prompting called a tool for every question that needed none. Change
+  this only with the held-out `natlas bench --tasks tool-calling` numbers, and
+  never tune on `bench/tool_cases.json`, or its scores stop meaning anything.
+- The engine switches the repetition penalty off under a grammar: JSON repeats
+  its punctuation by design and the penalty fights it.
 - Library code never prints. Progress goes through callbacks the CLI supplies,
   and diagnostics through the `natlas` loggers.
 - The server depends on the `Engine` and `Transcriber` protocols, not on

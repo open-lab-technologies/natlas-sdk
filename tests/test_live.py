@@ -47,7 +47,7 @@ def test_models_listed(client):
 def test_chat_answers_in_every_language(client, prompt, expected):
     reply = client.chat(prompt, temperature=0.0, max_tokens=40)
     assert expected in reply.text.lower()
-    assert reply.usage["completion_tokens"] > 0
+    assert reply.usage.completion_tokens > 0
 
 
 def test_stream_matches_chat(client):
@@ -157,3 +157,60 @@ def test_openai_client_transcription_by_model_name():
     with open(wav, "rb") as f:
         result = oa.audio.transcriptions.create(model="NCAIR1/Yoruba-ASR", file=f)
     assert result.text.strip()
+
+
+def get_market_price(commodity: str, market: str) -> dict:
+    """Today's price of a food commodity at a named market."""
+    return {"commodity": commodity, "market": market, "price_naira_per_kg": 1450}
+
+
+def test_tool_call_in_hausa(client):
+    reply = client.chat("Nawa ne farashin shinkafa a kasuwar Kano yau?", tools=[get_market_price])
+    assert reply.finish_reason == "tool_calls"
+    assert reply.tool_calls[0].name == "get_market_price"
+    assert "kano" in reply.tool_calls[0].arguments["market"].lower()
+
+
+def test_no_tool_when_none_is_needed(client):
+    reply = client.chat("Sannu, yaya kake?", tools=[get_market_price])
+    assert not reply.tool_calls and reply.text
+
+
+def test_run_tools_answers_with_the_tool_result(client):
+    reply = client.run_tools("What is the price of rice at Kano market today?",
+                             [get_market_price])
+    assert "1450" in reply.text.replace(",", "")
+
+
+def test_structured_output_with_pydantic(client):
+    pydantic = pytest.importorskip("pydantic")
+
+    class Analysis(pydantic.BaseModel):
+        language: str
+        sentiment: str
+        english_translation: str
+
+    reply = client.chat("Analyse this message: Ina matukar farin ciki da sabon aikina!",
+                        response_format=Analysis)
+    assert isinstance(reply.parsed, Analysis)
+    assert reply.parsed.english_translation
+
+
+def test_openai_client_tools_and_parse():
+    openai = pytest.importorskip("openai")
+    pydantic = pytest.importorskip("pydantic")
+    from natlas import function_tool
+
+    oa = openai.OpenAI(base_url=URL, api_key=KEY or "unused")
+    resp = oa.chat.completions.create(
+        model="n-atlas", tools=[function_tool(get_market_price)],
+        messages=[{"role": "user", "content": "How much are tomatoes in Mile 12 market?"}])
+    assert resp.choices[0].message.tool_calls[0].function.name == "get_market_price"
+
+    class Sentiment(pydantic.BaseModel):
+        sentiment: str
+
+    parsed = oa.chat.completions.parse(
+        model="n-atlas", response_format=Sentiment,
+        messages=[{"role": "user", "content": "Sentiment of: Mo dupe pupo!"}])
+    assert parsed.choices[0].message.parsed.sentiment

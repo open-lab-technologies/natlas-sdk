@@ -7,16 +7,17 @@ implement the same three methods.
 
 from __future__ import annotations
 
+import json
 import threading
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from ._extras import require
 
-Messages = list[dict[str, str]]
+Messages = list[dict[str, Any]]
 
 
 @dataclass
@@ -37,8 +38,15 @@ class Engine(Protocol):
         repetition_penalty: float,
         top_p: float,
         stop: list[str],
+        tools: list[dict[str, Any]] | None = None,
+        json_schema: dict[str, Any] | None = None,
     ) -> Iterator[Chunk]:
-        """Stream the reply. Raise ValueError if the prompt cannot fit the context."""
+        """Stream the reply.
+
+        `tools` are OpenAI tool definitions to show the model. `json_schema`, when
+        set, must constrain the output to JSON matching it. Raise ValueError if the
+        prompt cannot fit the context or the schema cannot be enforced.
+        """
         ...
 
     def count_prompt_tokens(self, messages: Messages) -> int: ...
@@ -65,22 +73,39 @@ class LlamaCppEngine:
             raise ValueError(f"{path.name} has no chat template in its metadata")
         env = sandbox.ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
         self._template = env.from_string(template)
+        self._grammar_cls = llama_cpp.LlamaGrammar
+        self._grammars: dict[str, Any] = {}
         # llama.cpp is not safe to call from several threads at once.
         self._lock = threading.Lock()
 
-    def render(self, messages: Messages) -> str:
+    def render(self, messages: Messages, tools: list[dict[str, Any]] | None = None) -> str:
         """Apply the model's chat template.
 
         Rendered here rather than by llama.cpp because the N-ATLAS template stamps
         today's date into the system header, and llama.cpp's formatter leaves it at
-        the template's placeholder.
+        the template's placeholder. Tools go in the system message: in the user
+        message, where the template puts them by default, the model calls a tool
+        for almost every request.
         """
         return self._template.render(
             messages=messages,
+            tools=[t.get("function", t) for t in tools] if tools else None,
+            tools_in_user_message=False,
             add_generation_prompt=True,
             bos_token="",  # llama.cpp adds BOS itself when tokenising
             date_string=datetime.now().astimezone().strftime("%d %b %Y"),
         )
+
+    def _grammar(self, schema: dict[str, Any]) -> Any:
+        key = json.dumps(schema, sort_keys=True)
+        if key not in self._grammars:
+            try:
+                self._grammars[key] = self._grammar_cls.from_json_schema(key, verbose=False)
+            except Exception as e:  # llama.cpp raises several types here
+                raise ValueError(f"Cannot enforce this JSON schema: {e}") from e
+            if len(self._grammars) > 64:
+                self._grammars.pop(next(iter(self._grammars)))
+        return self._grammars[key]
 
     def count_tokens(self, text: str) -> int:
         return len(self.llm.tokenize(text.encode(), add_bos=False, special=True))
@@ -97,8 +122,15 @@ class LlamaCppEngine:
         repetition_penalty: float,
         top_p: float = 0.95,
         stop: list[str] | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        json_schema: dict[str, Any] | None = None,
     ) -> Iterator[Chunk]:
-        prompt = self.render(messages)
+        prompt = self.render(messages, tools)
+        grammar = self._grammar(json_schema) if json_schema is not None else None
+        if grammar is not None:
+            # The penalty discourages tokens already used, and JSON repeats quotes,
+            # commas and braces by design, so it fights the grammar.
+            repetition_penalty = 1.0
         with self._lock:
             # Start from an empty cache. Reusing the previous prompt's cached prefix
             # changes the arithmetic enough to flip near-tied tokens, which would make
@@ -111,6 +143,7 @@ class LlamaCppEngine:
                 top_p=top_p,
                 repeat_penalty=repetition_penalty,
                 stop=[self.EOT, *(stop or [])],
+                grammar=grammar,
                 stream=True,
             ):
                 choice = out["choices"][0]

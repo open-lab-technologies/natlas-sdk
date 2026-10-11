@@ -1,0 +1,62 @@
+{
+  "tools": [
+    {"type": "function", "function": {"name": "get_market_price", "description": "Today's price of a food commodity at a named market",
+      "parameters": {"type": "object", "properties": {"commodity": {"type": "string"}, "market": {"type": "string"}}, "required": ["commodity", "market"]}}},
+    {"type": "function", "function": {"name": "find_health_centre", "description": "The nearest health centre or hospital in a town",
+      "parameters": {"type": "object", "properties": {"town": {"type": "string"}}, "required": ["town"]}}},
+    {"type": "function", "function": {"name": "set_reminder", "description": "Set a reminder for the user at a given time",
+      "parameters": {"type": "object", "properties": {"message": {"type": "string"}, "time": {"type": "string"}}, "required": ["message", "time"]}}},
+    {"type": "function", "function": {"name": "get_football_score", "description": "Latest match score for a football team",
+      "parameters": {"type": "object", "properties": {"team": {"type": "string"}}, "required": ["team"]}}}
+  ],
+  "cases": {
+    "en": [
+      ["What is the price of rice at Kano market today?", "get_market_price", {"commodity": ["rice"], "market": ["kano"]}],
+      ["Where is the nearest health centre in Ibadan?", "find_health_centre", {"town": ["ibadan"]}],
+      ["Remind me to take my medicine at 8pm.", "set_reminder", {"message": ["medicine"], "time": ["8"]}],
+      ["What was the score in the Enyimba match?", "get_football_score", {"team": ["enyimba"]}],
+      ["How much are tomatoes in Mile 12 market?", "get_market_price", {"commodity": ["tomato"], "market": ["mile 12"]}],
+      ["Set a reminder for my meeting tomorrow at 10 am.", "set_reminder", {"message": ["meeting"], "time": ["10"]}],
+      ["Tell me a short proverb about patience.", null, null],
+      ["What is the plural of 'child' in English?", null, null],
+      ["Good evening, how are you?", null, null],
+      ["Explain what malaria is in one sentence.", null, null]
+    ],
+    "ha": [
+      ["Nawa ne farashin shinkafa a kasuwar Kano yau?", "get_market_price", {"commodity": ["shinkafa", "rice"], "market": ["kano"]}],
+      ["Ina asibitin mafi kusa a Zaria?", "find_health_centre", {"town": ["zaria"]}],
+      ["Ka tunatar da ni in sha magani da karfe takwas na dare.", "set_reminder", {"message": ["magani", "medicine"], "time": ["8", "takwas"]}],
+      ["Menene sakamakon wasan Kano Pillars?", "get_football_score", {"team": ["pillars"]}],
+      ["Nawa ake sayar da tumatur a kasuwar Dawanau?", "get_market_price", {"commodity": ["tumatur", "tomato"], "market": ["dawanau"]}],
+      ["Ka tuna min taron gobe da karfe goma na safe.", "set_reminder", {"message": ["taro", "meeting"], "time": ["10", "goma"]}],
+      ["Fada min karin magana game da hakuri.", null, null],
+      ["Sannu da yamma, yaya aiki?", null, null],
+      ["Menene ma'anar kalmar 'zaman lafiya'?", null, null],
+      ["Ka bayyana zazzabin cizon sauro a jumla daya.", null, null]
+    ],
+    "ig": [
+      ["Ego ole ka a na-ere osikapa n'ahịa Onitsha taa?", "get_market_price", {"commodity": ["osikapa", "rice"], "market": ["onitsha"]}],
+      ["Ebee ka ụlọ ọgwụ dị nso n'Enugu?", "find_health_centre", {"town": ["enugu"]}],
+      ["Chetara m ịṅụ ọgwụ m n'elekere asatọ nke abalị.", "set_reminder", {"message": ["ọgwụ", "medicine", "medication"], "time": ["8", "asatọ"]}],
+      ["Gịnị bụ akara egwuregwu Enyimba?", "get_football_score", {"team": ["enyimba"]}],
+      ["Ego ole ka tomato dị n'ahịa Ariaria?", "get_market_price", {"commodity": ["tomato"], "market": ["ariaria"]}],
+      ["Chetara m nzukọ echi n'elekere iri nke ụtụtụ.", "set_reminder", {"message": ["nzukọ", "meeting"], "time": ["10", "iri"]}],
+      ["Gwa m otu ilu gbasara ndidi.", null, null],
+      ["Ndewo, kedu ka ị mere?", null, null],
+      ["Gịnị ka okwu 'udo' pụtara?", null, null],
+      ["Kọwaa ịba n'otu ahịrịokwu.", null, null]
+    ],
+    "yo": [
+      ["Eélòó ni ìrẹsì ní ọjà Ọ̀yìngbò lónìí?", "get_market_price", {"commodity": ["ìrẹsì", "rice"], "market": ["ọ̀yìngbò"]}],
+      ["Níbo ni ilé ìwòsàn tó súnmọ́ jùlọ wà ní Ìbàdàn?", "find_health_centre", {"town": ["ìbàdàn"]}],
+      ["Rán mi létí láti lo oògùn mi ní agogo mẹ́jọ alẹ́.", "set_reminder", {"message": ["oògùn", "medicine", "medication"], "time": ["8", "mẹ́jọ"]}],
+      ["Kí ni àbájáde ìdíje Shooting Stars?", "get_football_score", {"team": ["shooting stars"]}],
+      ["Eélòó ni tòmátì ní ọjà Bódìjà?", "get_market_price", {"commodity": ["tòmátì", "tomato"], "market": ["bódìjà"]}],
+      ["Rán mi létí ìpàdé ọ̀la ní agogo mẹ́wàá òwúrọ̀.", "set_reminder", {"message": ["ìpàdé", "meeting"], "time": ["10", "mẹ́wàá"]}],
+      ["Sọ òwe kan fún mi nípa sùúrù.", null, null],
+      ["Ẹ kú ìrọ̀lẹ́, ṣé dáadáa ni?", null, null],
+      ["Kí ni ìtumọ̀ ọ̀rọ̀ 'àlàáfíà'?", null, null],
+      ["Ṣàlàyé ibà ní gbólóhùn kan.", null, null]
+    ]
+  }
+}

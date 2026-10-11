@@ -1,0 +1,10 @@
+{"id": "tools-en-0", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "rice", "market": "Kano market"}, "outcome": "correct"}
+{"id": "tools-en-1", "reply": "", "expected": "find_health_centre", "called": "find_health_centre", "arguments": {"town": "Ibadan"}, "outcome": "correct"}
+{"id": "tools-en-2", "reply": "", "expected": "set_reminder", "called": "set_reminder", "arguments": {"message": "take your medicine", "time": "8pm"}, "outcome": "correct"}
+{"id": "tools-en-3", "reply": "", "expected": "get_football_score", "called": "get_football_score", "arguments": {"team": "Enyimba"}, "outcome": "correct"}
+{"id": "tools-en-4", "reply": "", "expected": "get_market_price", "called": "get_market_price", "arguments": {"commodity": "tomatoes", "market": "Mile 12 market"}, "outcome": "correct"}
+{"id": "tools-en-5", "reply": "", "expected": "set_reminder", "called": "set_reminder", "arguments": {"message": "Meeting tomorrow at 10 am", "time": "10 am"}, "outcome": "correct"}
+{"id": "tools-en-6", "reply": "Patience is a virtue that guides us through the journey of life.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-en-7", "reply": "The plural of 'child' in English is \"children.\"", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-en-8", "reply": "Hello! I'm doing well, thank you for asking. How can I assist you tonight?", "expected": null, "called": null, "arguments": null, "outcome": "correct"}
+{"id": "tools-en-9", "reply": "Malaria is a serious and sometimes life-threatening infectious disease caused by Plasmodium parasites, which are transmitted to humans through the bite of an infected Anopheles mosquito.", "expected": null, "called": null, "arguments": null, "outcome": "correct"}

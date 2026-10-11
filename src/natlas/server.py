@@ -26,6 +26,13 @@ from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, field_validator
 
 from . import __version__, defaults
+from ._toolcalls import (
+    AUTO_INSTRUCTION,
+    ToolChoiceError,
+    call_schema,
+    parse_call,
+    to_template_messages,
+)
 from .asr import Transcriber
 from .engine import Chunk, Engine
 from .languages import LANGUAGES, get_language
@@ -35,14 +42,17 @@ MODEL_ID = "n-atlas"
 
 class ChatMessage(BaseModel):
     # "developer" is what newer OpenAI SDKs send in place of "system".
-    role: Literal["system", "developer", "user", "assistant"]
-    # OpenAI clients may send content as a list of typed parts instead of a string.
-    content: str | list[dict[str, Any]]
+    role: Literal["system", "developer", "user", "assistant", "tool"]
+    # OpenAI clients may send content as a list of typed parts instead of a
+    # string, and assistant messages that call a tool may have no content.
+    content: str | list[dict[str, Any]] | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_call_id: str | None = None
 
     @field_validator("content")
     @classmethod
-    def _flatten(cls, value: str | list[dict[str, Any]]) -> str:
-        if isinstance(value, str):
+    def _flatten(cls, value: str | list[dict[str, Any]] | None) -> str | None:
+        if value is None or isinstance(value, str):
             return value
         parts = []
         for part in value:
@@ -51,9 +61,14 @@ class ChatMessage(BaseModel):
             parts.append(part.get("text", ""))
         return "\n".join(parts)
 
-    def as_dict(self) -> dict[str, str]:
-        return {"role": "system" if self.role == "developer" else self.role,
-                "content": self.content}
+    def as_dict(self) -> dict[str, Any]:
+        message: dict[str, Any] = {
+            "role": "system" if self.role == "developer" else self.role,
+            "content": self.content or "",
+        }
+        if self.tool_calls:
+            message["tool_calls"] = self.tool_calls
+        return message
 
 
 class ChatRequest(BaseModel):
@@ -65,12 +80,58 @@ class ChatRequest(BaseModel):
     repetition_penalty: float = defaults.REPETITION_PENALTY
     stop: str | list[str] | None = None
     stream: bool = False
+    tools: list[dict[str, Any]] | None = None
+    tool_choice: str | dict[str, Any] | None = None
+    response_format: dict[str, Any] | None = None
+
+
+def _json_schema(response_format: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not response_format or response_format.get("type") == "text":
+        return None
+    if response_format.get("type") == "json_object":
+        return {"type": "object"}
+    if response_format.get("type") == "json_schema":
+        schema = (response_format.get("json_schema") or {}).get("schema")
+        if not isinstance(schema, dict):
+            raise HTTPException(400, "response_format.json_schema.schema must be a JSON schema")
+        return schema
+    raise HTTPException(400, f"Unsupported response_format type {response_format.get('type')!r}")
 
 
 def _error(status: int, message: str) -> JSONResponse:
     """OpenAI's error body, so OpenAI SDKs surface the message instead of a raw payload."""
     kind = "invalid_request_error" if status < 500 else "server_error"
     return JSONResponse({"error": {"message": message, "type": kind, "code": status}}, status)
+
+
+def _completion(completion_id: str, created: int, message: dict[str, Any], finish: str,
+                prompt_tokens: int, completion_tokens: int) -> dict[str, Any]:
+    return {
+        "id": completion_id,
+        "object": "chat.completion",
+        "created": created,
+        "model": MODEL_ID,
+        "choices": [{"index": 0, "message": message, "finish_reason": finish}],
+        "usage": {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+        },
+    }
+
+
+async def _tool_call_events(completion_id: str, created: int,
+                            tool_call: dict[str, Any]) -> AsyncIterator[str]:
+    def chunk(delta: dict[str, Any], finish: str | None) -> str:
+        body = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
+                "model": MODEL_ID,
+                "choices": [{"index": 0, "delta": delta, "finish_reason": finish}]}
+        return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
+
+    yield chunk({"role": "assistant", "content": None}, None)
+    yield chunk({"tool_calls": [{"index": 0, **tool_call}]}, None)
+    yield chunk({}, "tool_calls")
+    yield "data: [DONE]\n\n"
 
 
 class _Generation:
@@ -155,13 +216,41 @@ def create_app(
                 return _error(401, "Missing or invalid API key")
         return await call_next(request)
 
-    def prepare(req: ChatRequest) -> list[dict[str, str]]:
+    def prepare(req: ChatRequest) -> list[dict[str, Any]]:
         if not req.messages:
             raise HTTPException(400, "messages must not be empty")
-        messages = [m.as_dict() for m in req.messages]
+        try:
+            messages = to_template_messages([m.as_dict() for m in req.messages])
+        except (KeyError, ValueError) as e:
+            raise HTTPException(400, f"Malformed tool call in messages: {e}") from e
         if inject_system_prompt and messages[0]["role"] != "system":
             messages.insert(0, {"role": "system", "content": defaults.SYSTEM_PROMPT})
         return messages
+
+    async def start(chunks: Iterator[Chunk]) -> tuple[_Generation, Chunk | None]:
+        """Begin a generation and pull its first chunk before any response is sent,
+        so a prompt that cannot fit or a schema that cannot be enforced is a 400
+        even on a streaming request."""
+        generation = _Generation(chunks)
+        try:
+            return generation, await generation.next()
+        except ValueError as e:
+            generation.stop()
+            raise HTTPException(400, str(e)) from e
+        except BaseException:
+            generation.stop()
+            raise
+
+    async def collect(generation: _Generation, first: Chunk | None) -> tuple[str, str]:
+        parts, finish, chunk = [], "stop", first
+        try:
+            while chunk is not None:
+                parts.append(chunk.text)
+                finish = chunk.finish_reason or finish
+                chunk = await generation.next()
+        finally:
+            generation.stop()
+        return "".join(parts).strip(), finish
 
     @app.get("/health")
     def health() -> dict[str, Any]:
@@ -179,7 +268,7 @@ def create_app(
     async def chat(req: ChatRequest):
         messages = prepare(req)
         stop = [req.stop] if isinstance(req.stop, str) else (req.stop or [])
-        params = {
+        params: dict[str, Any] = {
             "temperature": req.temperature,
             "top_p": req.top_p,
             "max_tokens": req.max_tokens or 512,
@@ -188,18 +277,43 @@ def create_app(
         }
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
         created = int(time.time())
+        answer_schema = _json_schema(req.response_format)
 
-        generation = _Generation(engine.generate(messages, **params))
-        try:
-            # Pulled before any response is sent, so a prompt that cannot fit the
-            # context window is a 400 even on a streaming request.
-            first = await generation.next()
-        except ValueError as e:
-            generation.stop()
-            raise HTTPException(400, str(e)) from e
-        except BaseException:
-            generation.stop()
-            raise
+        call = None
+        if req.tools and req.tool_choice != "none":
+            try:
+                schema, allow_none = call_schema(req.tools, req.tool_choice)
+            except ToolChoiceError as e:
+                raise HTTPException(400, str(e)) from e
+            decision_messages = messages
+            if allow_none:
+                decision_messages = [dict(messages[0]), *messages[1:]]
+                decision_messages[0]["content"] += AUTO_INSTRUCTION
+            generation, first = await start(engine.generate(
+                decision_messages, **params, tools=req.tools, json_schema=schema))
+            decision, _ = await collect(generation, first)
+            try:
+                call = parse_call(decision)
+            except (ValueError, KeyError) as e:  # reply was cut off by max_tokens
+                raise HTTPException(400, f"Tool call was incomplete; raise max_tokens ({e})") from e
+
+        if call is not None:
+            name, arguments = call
+            tool_call = {"id": f"call_{uuid.uuid4().hex[:24]}", "type": "function",
+                         "function": {"name": name,
+                                      "arguments": json.dumps(arguments, ensure_ascii=False)}}
+            prompt_tokens = engine.count_prompt_tokens(messages)
+            completion_tokens = engine.count_tokens(tool_call["function"]["arguments"])
+            if req.stream:
+                return StreamingResponse(
+                    _tool_call_events(completion_id, created, tool_call),
+                    media_type="text/event-stream")
+            return _completion(completion_id, created,
+                               {"role": "assistant", "content": None, "tool_calls": [tool_call]},
+                               "tool_calls", prompt_tokens, completion_tokens)
+
+        generation, first = await start(engine.generate(messages, **params,
+                                                         json_schema=answer_schema))
 
         if req.stream:
             def frame(body: dict[str, Any]) -> str:
@@ -231,33 +345,9 @@ def create_app(
 
             return StreamingResponse(events(), media_type="text/event-stream")
 
-        parts, finish, chunk = [], "stop", first
-        try:
-            while chunk is not None:
-                parts.append(chunk.text)
-                finish = chunk.finish_reason or finish
-                chunk = await generation.next()
-        finally:
-            generation.stop()
-        text = "".join(parts).strip()
-        prompt_tokens = engine.count_prompt_tokens(messages)
-        completion_tokens = engine.count_tokens(text)
-        return {
-            "id": completion_id,
-            "object": "chat.completion",
-            "created": created,
-            "model": MODEL_ID,
-            "choices": [{
-                "index": 0,
-                "message": {"role": "assistant", "content": text},
-                "finish_reason": finish,
-            }],
-            "usage": {
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                "total_tokens": prompt_tokens + completion_tokens,
-            },
-        }
+        text, finish = await collect(generation, first)
+        return _completion(completion_id, created, {"role": "assistant", "content": text}, finish,
+                           engine.count_prompt_tokens(messages), engine.count_tokens(text))
 
     @app.post("/v1/audio/transcriptions")
     def transcriptions(
