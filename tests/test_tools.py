@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from natlas import (
+from pynatlas import (
     AsyncNAtlas,
     NAtlas,
     StructuredOutputError,
@@ -14,7 +14,7 @@ from natlas import (
     ToolLoopError,
     function_tool,
 )
-from natlas._toolcalls import NO_TOOL, call_schema, parse_call, to_template_messages
+from pynatlas._toolcalls import NO_TOOL, call_schema, parse_call, to_template_messages
 
 BASE = "http://test/v1"
 CHAT = f"{BASE}/chat/completions"

@@ -174,7 +174,7 @@ class _Generation:
         self._queue: asyncio.Queue[Any] = asyncio.Queue()
         self._loop = asyncio.get_running_loop()
         self._stopped = threading.Event()
-        threading.Thread(target=self._work, name="natlas-generate", daemon=True).start()
+        threading.Thread(target=self._work, name="pynatlas-generate", daemon=True).start()
 
     def _put(self, item: Any) -> None:
         try:

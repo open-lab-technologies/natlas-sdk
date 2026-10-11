@@ -1,4 +1,4 @@
-# natlas
+# pynatlas
 
 Python SDK for [N-ATLAS](https://huggingface.co/NCAIR1/N-ATLaS), Nigeria's open
 language model for English, Hausa, Igbo and Yoruba, and its speech recognition
@@ -8,22 +8,22 @@ run one locally.
 ## Install
 
 ```bash
-pip install "natlas @ git+https://github.com/Nazehs/natlas-sdk"
+pip install "pynatlas @ git+https://github.com/Nazehs/natlas-sdk"
 ```
 
 | Install | Adds | Size |
 |---|---|---|
-| `natlas` | Sync and async clients | 2.5 MB |
-| `natlas[server]` | `natlas serve`: N-ATLAS on your machine behind the OpenAI API | 109 MB |
-| `natlas[asr]` | Speech recognition for `natlas serve --asr` | 690 MB |
-| `natlas[bench]` | `natlas bench`: benchmarks for any endpoint | 51 MB |
+| `pynatlas` | Sync and async clients | 2.5 MB |
+| `pynatlas[server]` | `pynatlas serve`: N-ATLAS on your machine behind the OpenAI API | 109 MB |
+| `pynatlas[asr]` | Speech recognition for `pynatlas serve --asr` | 690 MB |
+| `pynatlas[bench]` | `pynatlas bench`: benchmarks for any endpoint | 51 MB |
 
-Python 3.10 or newer. `import natlas` loads only httpx.
+Python 3.10 or newer. `import pynatlas` loads only httpx.
 
 ## Quick start
 
 ```python
-from natlas import NAtlas
+from pynatlas import NAtlas
 
 client = NAtlas(base_url="http://localhost:8000/v1")
 
@@ -38,9 +38,9 @@ for piece in client.stream("Ka bayyana mini menene noma a takaice"):
 To run N-ATLAS locally:
 
 ```bash
-pip install "natlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
-natlas download      # 4.9 GB, 4-bit weights
-natlas serve         # http://127.0.0.1:8000/v1
+pip install "pynatlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
+pynatlas download      # 4.9 GB, 4-bit weights
+pynatlas serve         # http://127.0.0.1:8000/v1
 ```
 
 On Apple Silicon install with `CMAKE_ARGS="-DGGML_METAL=on"`, on NVIDIA with
@@ -52,14 +52,14 @@ On Apple Silicon install with `CMAKE_ARGS="-DGGML_METAL=on"`, on NVIDIA with
 
 | Provider | `base_url` | `model` |
 |---|---|---|
-| `natlas serve` | `http://localhost:8000/v1` | `n-atlas` (default) |
+| `pynatlas serve` | `http://localhost:8000/v1` | `n-atlas` (default) |
 | vLLM with the official weights | `http://host:8000/v1` | `NCAIR1/N-ATLaS` |
 | llama.cpp server | `http://host:8080/v1` | its `--model_alias` |
 | Ollama | `http://localhost:11434/v1` | your model tag |
 
 Requests carry standard OpenAI fields only. Provider-specific options pass
 through as keyword arguments, for example `client.chat(..., repetition_penalty=1.12)`
-on vLLM. Tested end to end against `natlas serve` and llama.cpp's server.
+on vLLM. Tested end to end against `pynatlas serve` and llama.cpp's server.
 
 ### Tool calling
 
@@ -93,7 +93,7 @@ class Feedback(BaseModel):
 client.chat("Classify: Kayan sun iso a makare.", response_format=Feedback).parsed
 ```
 
-`response_format` also takes a JSON schema dict. `natlas serve`, vLLM and
+`response_format` also takes a JSON schema dict. `pynatlas serve`, vLLM and
 llama.cpp enforce the schema while generating, so the reply is always valid;
 elsewhere a mismatch raises `StructuredOutputError`. Pydantic is only needed if
 you pass a Pydantic model.
@@ -133,27 +133,27 @@ backoff, honouring `Retry-After`. Everything raised derives from `NAtlasError`:
 | `NATLAS_MODEL` | `n-atlas` |
 | `NATLAS_TIMEOUT` | `120` seconds |
 | `NATLAS_MAX_RETRIES` | `2` |
-| `NATLAS_MODEL_PATH` | the downloaded weights, for `natlas serve` |
-| `NATLAS_CACHE` | `~/.cache/natlas` |
+| `NATLAS_MODEL_PATH` | the downloaded weights, for `pynatlas serve` |
+| `NATLAS_CACHE` | `~/.cache/pynatlas` |
 
 Settings are validated when a client is created; a malformed value raises
 `ConfigError` naming the variable. Arguments passed to the client win over the
-environment. `natlas config` prints what is in effect, with the key masked.
+environment. `pynatlas config` prints what is in effect, with the key masked.
 
 ## Server
 
-`natlas serve` puts a GGUF build behind the OpenAI API, so the official
+`pynatlas serve` puts a GGUF build behind the OpenAI API, so the official
 `openai` package works unchanged, including tool calls, streaming and
 `chat.completions.parse()`.
 
 ```bash
-natlas serve --asr                                               # speech to text too
-natlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"  # to share it
+pynatlas serve --asr                                               # speech to text too
+pynatlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"  # to share it
 ```
 
 It handles one request at a time; for concurrent users serve the official
 weights with vLLM. Other backends plug in through the `Engine` protocol in
-`natlas.engine`, and speech backends through `natlas.asr.Transcriber`.
+`pynatlas.engine`, and speech backends through `pynatlas.asr.Transcriber`.
 
 The speech models (`NCAIR1/Hausa-ASR`, `Igbo-ASR`, `Yoruba-ASR`,
 `NigerianAccentedEnglish`) are gated: accept the terms on each model page on
@@ -164,17 +164,17 @@ decode directly; m4a and webm need ffmpeg.
 
 | Command | Does |
 |---|---|
-| `natlas download [--quant Q4_K_M]` | Fetch weights, resumable and hash-checked |
-| `natlas serve [--asr] [--api-key KEY]` | Run the local server |
-| `natlas chat ["prompt"]` | Chat, or answer one prompt |
-| `natlas translate "text" --to yo` | Translate between en, ha, ig and yo |
-| `natlas transcribe file --language ha` | Speech to text |
-| `natlas bench [--tasks ...] [-n 100]` | Run benchmarks |
-| `natlas config` | Show settings in effect |
+| `pynatlas download [--quant Q4_K_M]` | Fetch weights, resumable and hash-checked |
+| `pynatlas serve [--asr] [--api-key KEY]` | Run the local server |
+| `pynatlas chat ["prompt"]` | Chat, or answer one prompt |
+| `pynatlas translate "text" --to yo` | Translate between en, ha, ig and yo |
+| `pynatlas transcribe file --language ha` | Speech to text |
+| `pynatlas bench [--tasks ...] [-n 100]` | Run benchmarks |
+| `pynatlas config` | Show settings in effect |
 
 ## Benchmarks
 
-`natlas bench` scores any endpoint and saves every reply next to its expected
+`pynatlas bench` scores any endpoint and saves every reply next to its expected
 answer. Results for the 4-bit model on Apple Silicon, temperature 0:
 
 | | English | Hausa | Igbo | Yoruba |
@@ -199,7 +199,7 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
 - N-ATLAS was trained partly on open datasets, so some test items may have been
   seen in training.
 - The model's chat template writes today's date into every prompt, so replies
-  drift from one day to the next. These runs used `natlas serve --date "10 Oct 2026"`;
+  drift from one day to the next. These runs used `pynatlas serve --date "10 Oct 2026"`;
   with the same date, a rerun reproduces them exactly.
 
 Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
@@ -229,7 +229,7 @@ ruff check src tests playground examples
 End-to-end tests run against a live server:
 
 ```bash
-natlas serve --asr --api-key test-key
+pynatlas serve --asr --api-key test-key
 NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests/test_live.py
 ```
 

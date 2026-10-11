@@ -60,7 +60,7 @@ class Settings:
     timeout: float = DEFAULT_TIMEOUT
     max_retries: int = DEFAULT_MAX_RETRIES
     model_path: Path | None = None
-    cache_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "natlas")
+    cache_dir: Path = field(default_factory=lambda: Path.home() / ".cache" / "pynatlas")
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:

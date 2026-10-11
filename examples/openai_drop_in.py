@@ -1,6 +1,6 @@
 """Existing OpenAI code running on N-ATLAS: only the base URL changes.
 
-    natlas serve
+    pynatlas serve
     python examples/openai_drop_in.py
 """
 

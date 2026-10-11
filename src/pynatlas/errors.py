@@ -68,7 +68,7 @@ def status_error(status: int, message: str, body: Any = None) -> APIStatusError:
 class StructuredOutputError(NAtlasError):
     """The reply did not match the requested `response_format`. `text` is the raw reply.
 
-    Endpoints that enforce the schema while generating, such as `natlas serve`,
+    Endpoints that enforce the schema while generating, such as `pynatlas serve`,
     vLLM and llama.cpp's server, should not produce this; others may.
     """
 

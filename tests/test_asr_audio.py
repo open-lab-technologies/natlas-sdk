@@ -5,7 +5,7 @@ import pytest
 
 pytest.importorskip("soundfile")
 pytest.importorskip("soxr")
-from natlas.asr import SAMPLE_RATE, AudioDecodeError, load_audio
+from pynatlas.asr import SAMPLE_RATE, AudioDecodeError, load_audio
 
 pytestmark = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
 

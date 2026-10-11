@@ -1,6 +1,6 @@
 """Clients for any OpenAI-compatible endpoint serving N-ATLAS.
 
-Works against `natlas serve`, vLLM, llama.cpp's server, Ollama or a hosted
+Works against `pynatlas serve`, vLLM, llama.cpp's server, Ollama or a hosted
 N-ATLAS API: anything that speaks /v1/chat/completions. Requests carry only
 standard OpenAI fields unless the caller adds others.
 """
@@ -39,7 +39,7 @@ Prompt = str | Sequence[Message]
 Audio = str | Path | bytes
 Decoder = Callable[[str], Any]
 
-log = logging.getLogger("natlas")
+log = logging.getLogger("pynatlas")
 
 
 def _tool_call(data: dict[str, Any]) -> ToolCall:
@@ -92,7 +92,7 @@ class _Base:
         settings = settings or Settings.from_env()
         self.base_url = validate_base_url(base_url) if base_url else settings.base_url
         self.api_key = api_key or settings.api_key
-        # Servers name the model differently: "n-atlas" for `natlas serve`, the
+        # Servers name the model differently: "n-atlas" for `pynatlas serve`, the
         # Hugging Face id for vLLM, the tag you pulled for Ollama.
         self.model = model or settings.model
         self.system_prompt = system_prompt
@@ -427,7 +427,7 @@ class NAtlas(_Base):
         """Speech to text with the N-ATLAS speech model for `language`.
 
         `audio` is a file path or the file's bytes. Needs an endpoint with
-        /v1/audio/transcriptions, such as `natlas serve --asr`.
+        /v1/audio/transcriptions, such as `pynatlas serve --asr`.
         """
         data, files = self._audio_form(audio, language, model)
         resp = self._request("POST", "/audio/transcriptions", data=data, files=files)

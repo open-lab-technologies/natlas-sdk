@@ -7,7 +7,7 @@ HEAVY = ["fastapi", "uvicorn", "llama_cpp", "torch", "transformers", "numpy", "s
 
 def test_import_natlas_loads_no_optional_dependencies():
     code = (
-        "import sys, natlas, json; "
+        "import sys, pynatlas, json; "
         f"print(json.dumps([m for m in {HEAVY!r} if m in sys.modules]))"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
@@ -15,8 +15,8 @@ def test_import_natlas_loads_no_optional_dependencies():
 
 
 def test_public_api_is_exported():
-    import natlas
+    import pynatlas
 
     for name in ("NAtlas", "AsyncNAtlas", "NAtlasError", "RateLimitError", "get_language"):
-        assert name in natlas.__all__
-    assert natlas.__version__
+        assert name in pynatlas.__all__
+    assert pynatlas.__version__

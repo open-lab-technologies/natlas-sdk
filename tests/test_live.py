@@ -1,9 +1,9 @@
-"""End-to-end tests against a running `natlas serve`. Skipped unless NATLAS_E2E_URL is set:
+"""End-to-end tests against a running `pynatlas serve`. Skipped unless NATLAS_E2E_URL is set:
 
-    natlas serve --asr --api-key test-key
+    pynatlas serve --asr --api-key test-key
     NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests/test_live.py
 
-Speech tests also need ffmpeg and use FLEURS clips downloaded by `natlas bench`.
+Speech tests also need ffmpeg and use FLEURS clips downloaded by `pynatlas bench`.
 """
 
 import os
@@ -14,7 +14,7 @@ import time
 import httpx
 import pytest
 
-from natlas import NAtlas, NAtlasError
+from pynatlas import NAtlas, NAtlasError
 
 URL = os.getenv("NATLAS_E2E_URL")
 KEY = os.getenv("NATLAS_E2E_API_KEY")
@@ -116,7 +116,7 @@ def test_official_openai_client():
 
 
 def _fleurs_clip(code: str):
-    from natlas.bench.data import fleurs
+    from pynatlas.bench.data import fleurs
 
     item = fleurs(code, 1)[0]
     return item.meta["audio"], item.gold
@@ -131,7 +131,7 @@ def asr_enabled(health):
 @pytest.mark.usefixtures("asr_enabled")
 @pytest.mark.parametrize("lang", ["en", "ha", "ig", "yo"])
 def test_transcribe_real_speech(client, lang):
-    from natlas.bench.scoring import wer
+    from pynatlas.bench.scoring import wer
 
     audio, reference = _fleurs_clip(lang)
     text = client.transcribe(audio, language=lang)
@@ -199,7 +199,7 @@ def test_structured_output_with_pydantic(client):
 def test_openai_client_tools_and_parse():
     openai = pytest.importorskip("openai")
     pydantic = pytest.importorskip("pydantic")
-    from natlas import function_tool
+    from pynatlas import function_tool
 
     oa = openai.OpenAI(base_url=URL, api_key=KEY or "unused")
     resp = oa.chat.completions.create(

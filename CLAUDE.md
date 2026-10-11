@@ -1,6 +1,6 @@
-# natlas
+# pynatlas
 
-Python SDK for N-ATLAS. Layout: `src/natlas/` (client, types, tools, errors,
+Python SDK for N-ATLAS. Layout: `src/pynatlas/` (client, types, tools, errors,
 settings, defaults, server, _toolcalls, engine, asr, models, cli, bench/),
 `playground/` (Streamlit, not packaged), `examples/`, `bench-results/`
 (published runs).
@@ -11,7 +11,7 @@ settings, defaults, server, _toolcalls, engine, asr, models, cli, bench/),
 uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,asr,bench]" --group dev
 pytest                                  # unit tests, no model needed
 ruff check src tests playground examples
-natlas serve --asr --api-key test-key   # then:
+pynatlas serve --asr --api-key test-key   # then:
 NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests/test_live.py
 ```
 
@@ -20,7 +20,7 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
 
 ## Invariants
 
-- The core install is httpx only, and `import natlas` must not load anything
+- The core install is httpx only, and `import pynatlas` must not load anything
   else. Heavy dependencies belong in an extra and are imported through
   `_extras.require` at the point of use, so a missing extra names its install
   command.
@@ -39,12 +39,12 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
 - Every tool decision is generated under a JSON schema listing only the real
   tools, plus `{"name": "none"}` in auto mode, with tools in the system message.
   Free prompting called a tool for every question that needed none. Change
-  this only with the held-out `natlas bench --tasks tool-calling` numbers, and
+  this only with the held-out `pynatlas bench --tasks tool-calling` numbers, and
   never tune on `bench/tool_cases.json`, or its scores stop meaning anything.
 - The engine switches the repetition penalty off under a grammar: JSON repeats
   its punctuation by design and the penalty fights it.
 - Library code never prints. Progress goes through callbacks the CLI supplies,
-  and diagnostics through the `natlas` loggers.
+  and diagnostics through the `pynatlas` loggers.
 - The server depends on the `Engine` and `Transcriber` protocols, not on
   llama.cpp or transformers.
 - Endpoints consume engine output through `_Generation` and call `stop()` in a
@@ -53,7 +53,7 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
 - Render the chat template in `LlamaCppEngine`, not with llama.cpp's formatter:
   the template stamps today's date, which llama.cpp leaves at a placeholder.
   Because the date is in every prompt, benchmark runs are only comparable with
-  the same `natlas serve --date`; published runs use "10 Oct 2026".
+  the same `pynatlas serve --date`; published runs use "10 Oct 2026".
 - Clear the llama.cpp cache before every generation. Prefix reuse makes a
   temperature-0 reply depend on the previous request, and benchmark scores on
   question order.

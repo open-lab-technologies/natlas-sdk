@@ -1,4 +1,4 @@
-"""Inference backends for `natlas serve`.
+"""Inference backends for `pynatlas serve`.
 
 The server talks to any object that satisfies `Engine`. `LlamaCppEngine` runs
 GGUF builds of N-ATLAS through llama.cpp; other backends only need to
@@ -69,7 +69,7 @@ class LlamaCppEngine:
 
         path = Path(model_path).expanduser()
         if not path.exists():
-            raise FileNotFoundError(f"Model file not found: {path}. Run `natlas download` first.")
+            raise FileNotFoundError(f"Model file not found: {path}. Run `pynatlas download` first.")
         self.name = path.name
         self.date = date
         self.llm = llama_cpp.Llama(

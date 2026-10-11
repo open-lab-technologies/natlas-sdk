@@ -21,7 +21,7 @@ WHISPER_WINDOW_SECONDS = 30
 
 
 class Transcriber(Protocol):
-    """What `natlas serve` needs from a speech backend."""
+    """What `pynatlas serve` needs from a speech backend."""
 
     def transcribe(self, data: bytes, language: str) -> str:
         """Audio file bytes in any supported format to text, for a language code."""

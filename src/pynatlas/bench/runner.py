@@ -17,7 +17,7 @@ from ..errors import NAtlasError
 from ..types import ToolCall
 from . import data, scoring
 
-log = logging.getLogger("natlas.bench")
+log = logging.getLogger("pynatlas.bench")
 
 
 Metric = Literal["accuracy", "chrf", "wer", "tool-calls"]

@@ -1,4 +1,4 @@
-"""The `natlas` command line."""
+"""The `pynatlas` command line."""
 
 from __future__ import annotations
 
@@ -92,7 +92,7 @@ def _bench(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="natlas", description="Tools for building with N-ATLAS")
+    parser = argparse.ArgumentParser(prog="pynatlas", description="Tools for building with N-ATLAS")
     parser.add_argument("--base-url", help="OpenAI-compatible endpoint (default: $NATLAS_BASE_URL)")
     parser.add_argument("--model", help="Model name the endpoint expects (default: $NATLAS_MODEL "
                         "or n-atlas)")

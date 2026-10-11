@@ -2,13 +2,13 @@
 
 Works with WhatsApp voice notes (.ogg/.opus), iPhone recordings (.m4a), mp3 and wav.
 
-    natlas serve --asr
+    pynatlas serve --asr
     python examples/voice_assistant.py voice-note.ogg --language ha
 """
 
 import argparse
 
-from natlas import NAtlas, get_language
+from pynatlas import NAtlas, get_language
 
 parser = argparse.ArgumentParser()
 parser.add_argument("audio")

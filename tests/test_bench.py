@@ -1,6 +1,6 @@
 import pytest
 
-from natlas.bench import data, scoring
+from pynatlas.bench import data, scoring
 
 
 @pytest.mark.parametrize(("reply", "expected"), [
@@ -75,7 +75,7 @@ def test_wer_counts_missing_diacritic_as_error():
     ("a b a b a b c", False),
 ])
 def test_looks_looped(text, looped):
-    from natlas.asr import looks_looped
+    from pynatlas.asr import looks_looped
 
     assert looks_looped(text) is looped
 
