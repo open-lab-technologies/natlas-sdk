@@ -27,7 +27,8 @@ def test_values_are_read_and_typed():
 
 
 def test_empty_values_keep_defaults():
-    assert Settings.from_env({"NATLAS_BASE_URL": "  ", "NATLAS_TIMEOUT": ""}) == Settings.from_env({})
+    blank = Settings.from_env({"NATLAS_BASE_URL": "  ", "NATLAS_TIMEOUT": ""})
+    assert blank == Settings.from_env({})
 
 
 @pytest.mark.parametrize(("name", "value", "message"), [

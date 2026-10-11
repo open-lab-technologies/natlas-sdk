@@ -129,7 +129,7 @@ def test_api_key_required_when_set(engine):
     assert client.post("/v1/chat/completions", json=body, headers=wrong).status_code == 401
     ok = {"Authorization": "Bearer s3cret"}
     assert client.post("/v1/chat/completions", json=body, headers=ok).status_code == 200
-    assert client.get("/health").status_code == 200  # health stays open for probes
+    assert client.get("/health").status_code == 200
 
 
 def test_transcription_language_from_model_name(engine):
@@ -169,7 +169,8 @@ def test_engine_failure_mid_stream_is_reported_in_the_stream():
 
 def test_engine_failure_without_stream_is_a_500():
     client = TestClient(create_app(FailingEngine()), raise_server_exceptions=False)
-    resp = client.post("/v1/chat/completions", json={"messages": [{"role": "user", "content": "x"}]})
+    body = {"messages": [{"role": "user", "content": "x"}]}
+    resp = client.post("/v1/chat/completions", json=body)
     assert resp.status_code == 500
     assert resp.json()["error"]["message"] == "RuntimeError: GPU fell over"
 

@@ -17,6 +17,7 @@ from ._extras import require
 from .languages import get_language
 
 SAMPLE_RATE = 16_000
+WHISPER_WINDOW_SECONDS = 30
 
 
 class Transcriber(Protocol):
@@ -52,7 +53,8 @@ def load_audio(data: bytes) -> Any:
 
 def _ffmpeg_decode(data: bytes, np: Any) -> Any:
     if shutil.which("ffmpeg") is None:
-        raise AudioDecodeError("Unsupported audio format; install ffmpeg to read m4a, webm and others")
+        raise AudioDecodeError(
+            "Unsupported audio format; install ffmpeg to read m4a, webm and others")
     # A temporary file rather than stdin: m4a keeps its index at the end of the
     # file, and ffmpeg cannot seek back to it in a pipe.
     with tempfile.NamedTemporaryFile(suffix=".audio") as src:
@@ -107,7 +109,7 @@ class SpeechRecogniser:
     def _run(pipe: Any, audio: Any, generate_kwargs: dict[str, Any]) -> str:
         result = pipe(
             {"raw": audio, "sampling_rate": SAMPLE_RATE},
-            chunk_length_s=30,
+            chunk_length_s=WHISPER_WINDOW_SECONDS,
             return_timestamps=False,
             generate_kwargs=generate_kwargs,
         )

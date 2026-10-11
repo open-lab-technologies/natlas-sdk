@@ -101,7 +101,10 @@ class _Base:
         self._headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
     def _messages(self, prompt: Prompt, system: str | None) -> list[Message]:
-        messages = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else list(prompt)
+        if isinstance(prompt, str):
+            messages: list[Message] = [{"role": "user", "content": prompt}]
+        else:
+            messages = list(prompt)
         system = system if system is not None else self.system_prompt
         if system and not any(m.get("role") in ("system", "developer") for m in messages):
             messages.insert(0, {"role": "system", "content": system})
@@ -234,9 +237,10 @@ class _Base:
         detail = body
         if isinstance(body, dict):
             err = body.get("error")
-            detail = (err.get("message") if isinstance(err, dict) else err) or body.get("detail") or body
-        raise status_error(resp.status_code, f"{resp.status_code} from {resp.request.url}: {detail}",
-                           body)
+            server_message = err.get("message") if isinstance(err, dict) else err
+            detail = server_message or body.get("detail") or body
+        raise status_error(resp.status_code,
+                           f"{resp.status_code} from {resp.request.url}: {detail}", body)
 
     def _retry_delay(self, attempt: int, resp: httpx.Response | None) -> float | None:
         """Seconds to wait before retrying, or None to stop."""
@@ -318,7 +322,7 @@ class NAtlas(_Base):
         system: str | None = None,
         model: str | None = None,
         temperature: float | None = defaults.TEMPERATURE,
-        max_tokens: int | None = 512,
+        max_tokens: int | None = defaults.MAX_TOKENS,
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | dict[str, Any] | None = None,
         response_format: Any = None,
@@ -374,7 +378,7 @@ class NAtlas(_Base):
         system: str | None = None,
         model: str | None = None,
         temperature: float | None = defaults.TEMPERATURE,
-        max_tokens: int | None = 512,
+        max_tokens: int | None = defaults.MAX_TOKENS,
         **extra: Any,
     ) -> Iterator[str]:
         """Yield the reply piece by piece as the server produces it.
@@ -491,7 +495,7 @@ class AsyncNAtlas(_Base):
         system: str | None = None,
         model: str | None = None,
         temperature: float | None = defaults.TEMPERATURE,
-        max_tokens: int | None = 512,
+        max_tokens: int | None = defaults.MAX_TOKENS,
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | dict[str, Any] | None = None,
         response_format: Any = None,
@@ -537,7 +541,7 @@ class AsyncNAtlas(_Base):
         system: str | None = None,
         model: str | None = None,
         temperature: float | None = defaults.TEMPERATURE,
-        max_tokens: int | None = 512,
+        max_tokens: int | None = defaults.MAX_TOKENS,
         **extra: Any,
     ) -> AsyncIterator[str]:
         _reject_for_stream(extra)
