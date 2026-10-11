@@ -52,6 +52,8 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
   directly lets a client that hangs up mid-stream lock the server for good.
 - Render the chat template in `LlamaCppEngine`, not with llama.cpp's formatter:
   the template stamps today's date, which llama.cpp leaves at a placeholder.
+  Because the date is in every prompt, benchmark runs are only comparable with
+  the same `natlas serve --date`; published runs use "10 Oct 2026".
 - Clear the llama.cpp cache before every generation. Prefix reuse makes a
   temperature-0 reply depend on the previous request, and benchmark scores on
   question order.
