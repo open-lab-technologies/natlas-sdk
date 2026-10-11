@@ -48,8 +48,6 @@ def call(name, arguments, call_id="call_1"):
             "function": {"name": name, "arguments": json.dumps(arguments)}}
 
 
-# function_tool
-
 def test_function_tool_builds_schema_from_signature_and_docstring():
     spec = function_tool(get_weather)["function"]
     assert spec["name"] == "get_weather"
@@ -85,13 +83,12 @@ def test_function_tool_rejects_undescribable_types():
         function_tool(bad)
 
 
-# client: tools and structured output
-
 @respx.mock
 def test_tools_sent_and_tool_calls_parsed():
     route = respx.post(CHAT).mock(return_value=reply(
         tool_calls=[call("get_weather", {"city": "Kano"})], finish="tool_calls"))
-    r = NAtlas(base_url=BASE).chat("Weather in Kano?", tools=[get_weather], tool_choice="get_weather")
+    r = NAtlas(base_url=BASE).chat("Weather in Kano?", tools=[get_weather],
+                                   tool_choice="get_weather")
     assert r.tool_calls == (ToolCall("call_1", "get_weather", {"city": "Kano"}),)
     assert r.text == ""
     sent = json.loads(route.calls[0].request.content)
@@ -118,7 +115,8 @@ def test_response_format_with_pydantic_model():
     assert r.parsed == Analysis(language="ha", sentiment="positive")
     fmt = json.loads(route.calls[0].request.content)["response_format"]
     assert fmt["type"] == "json_schema"
-    assert fmt["json_schema"]["schema"]["properties"]["sentiment"]["enum"] == ["positive", "negative"]
+    sentiment = fmt["json_schema"]["schema"]["properties"]["sentiment"]
+    assert sentiment["enum"] == ["positive", "negative"]
 
 
 @respx.mock
@@ -146,8 +144,6 @@ def test_stream_rejects_tools_and_formats():
     with pytest.raises(TypeError, match="use chat"):
         list(NAtlas(base_url=BASE).stream("x", tools=[get_weather]))
 
-
-# client: run_tools
 
 @respx.mock
 def test_run_tools_executes_calls_until_text_answer():
@@ -202,8 +198,6 @@ async def test_async_run_tools_awaits_coroutine_tools():
     async with AsyncNAtlas(base_url=BASE) as c:
         assert (await c.run_tools("x", [lookup])).text == "Done."
 
-
-# server-side translation
 
 def test_call_schema_modes():
     tools = [function_tool(get_weather)]

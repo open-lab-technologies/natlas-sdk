@@ -4,56 +4,106 @@ from __future__ import annotations
 
 import json
 import logging
+import operator
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 from ..client import NAtlas
 from ..errors import NAtlasError
+from ..types import ToolCall
 from . import data, scoring
 
 log = logging.getLogger("natlas.bench")
+
+
+Metric = Literal["accuracy", "chrf", "wer", "tool-calls"]
+OUTCOMES = ("false_call", "missed_call", "wrong_tool", "wrong_arguments")
 
 
 @dataclass(frozen=True)
 class Task:
     name: str
     languages: tuple[str, ...]
-    load: Callable[[str], list[data.Item]]
+    load: Callable[..., list[data.Item]]
     max_tokens: int
-    metric: str  # "accuracy", "chrf", "wer" or "tool-calls"
+    metric: Metric
     parse: Callable[[str], str | None] | None = None
-    chance: float | None = None  # score from guessing, to read results against
-    audio: bool = False  # items carry an audio file to transcribe instead of a prompt
-    tools: bool = False  # items carry tool definitions and the call expected
+    matches: Callable[[str | None, str], bool] = operator.eq
+    chance: float | None = None
 
+
+ALL = ("en", "ha", "ig", "yo")
+NIGERIAN = ("ha", "ig", "yo")
 
 TASKS: dict[str, Task] = {
-    "afrimmlu": Task("afrimmlu", ("en", "ha", "ig", "yo"), data.afrimmlu, 8, "accuracy",
-                     scoring.parse_choice, 0.25),
-    "afrixnli": Task("afrixnli", ("en", "ha", "ig", "yo"), data.afrixnli, 8, "accuracy",
-                     scoring.parse_nli, 1 / 3),
-    "afrimgsm": Task("afrimgsm", ("en", "ha", "ig", "yo"), data.afrimgsm, 512, "accuracy",
-                     scoring.parse_number),
-    "mt-en-xx": Task("mt-en-xx", ("ha", "ig", "yo"), lambda l: data.mafand(l, "en-xx"), 256,
-                     "chrf"),
-    "mt-xx-en": Task("mt-xx-en", ("ha", "ig", "yo"), lambda l: data.mafand(l, "xx-en"), 256,
-                     "chrf"),
-    "asr-fleurs": Task("asr-fleurs", ("en", "ha", "ig", "yo"), data.fleurs, 0, "wer",
-                       audio=True),
-    "tool-calling": Task("tool-calling", ("en", "ha", "ig", "yo"), data.tool_calling, 200,
-                         "tool-calls", tools=True),
+    "afrimmlu": Task("afrimmlu", ALL, data.afrimmlu, 8, "accuracy",
+                     parse=scoring.parse_choice, chance=0.25),
+    "afrixnli": Task("afrixnli", ALL, data.afrixnli, 8, "accuracy",
+                     parse=scoring.parse_nli, chance=1 / 3),
+    "afrimgsm": Task("afrimgsm", ALL, data.afrimgsm, 512, "accuracy",
+                     parse=scoring.parse_number, matches=scoring.numbers_equal),
+    "mt-en-xx": Task("mt-en-xx", NIGERIAN, lambda l: data.mafand(l, "en-xx"), 256, "chrf"),
+    "mt-xx-en": Task("mt-xx-en", NIGERIAN, lambda l: data.mafand(l, "xx-en"), 256, "chrf"),
+    "asr-fleurs": Task("asr-fleurs", ALL, data.fleurs, 0, "wer"),
+    "tool-calling": Task("tool-calling", ALL, data.tool_calling, 200, "tool-calls"),
 }
 
-OUTCOMES = ("false_call", "missed_call", "wrong_tool", "wrong_arguments")
+
+def _items(task: Task, lang: str, n: int | None, seed: int) -> list[data.Item]:
+    if task.metric == "wer":
+        # FLEURS clips are streamed from the start of the archive, so take the
+        # first n rather than a random sample of the whole split.
+        return task.load(lang, n or 50)
+    return data.sample(task.load(lang), n, seed)
 
 
-def _correct(task: Task, parsed: str | None, gold: str) -> bool:
-    if task.name == "afrimgsm":
-        return scoring.numbers_equal(parsed, gold)
-    return parsed == gold
+def _ask(client: NAtlas, task: Task, item: data.Item, lang: str) -> tuple[str, ToolCall | None]:
+    if task.metric == "wer":
+        return client.transcribe(item.meta["audio"], language=lang), None
+    if task.metric == "tool-calls":
+        reply = client.chat(item.prompt, tools=item.meta["tools"], temperature=0.0,
+                            max_tokens=task.max_tokens)
+        return reply.text, reply.tool_calls[0] if reply.tool_calls else None
+    return client.chat(item.prompt, temperature=0.0, max_tokens=task.max_tokens).text, None
+
+
+def _row(task: Task, item: data.Item, reply: str, call: ToolCall | None) -> dict:
+    row: dict = {"id": item.id, "reply": reply}
+    if task.metric == "accuracy":
+        parsed = task.parse(reply) if task.parse else reply
+        row.update(gold=item.gold, parsed=parsed, correct=task.matches(parsed, item.gold))
+    elif task.metric == "wer":
+        row.update(gold=item.gold, wer=round(100 * scoring.wer([reply], [item.gold]), 1))
+    elif task.metric == "tool-calls":
+        called, arguments = (call.name, call.arguments) if call else (None, None)
+        row.update(expected=item.gold or None, called=called, arguments=arguments,
+                   outcome=scoring.tool_call_outcome(called, arguments or {}, item.gold,
+                                                     item.meta["arguments"]))
+    # chrf rows carry no reference: MAFAND is GPL-3.0, and the id is the line
+    # number in the upstream test file.
+    return row
+
+
+def _score(task: Task, rows: list[dict], replies: list[str], refs: list[str]) -> dict:
+    if task.metric == "accuracy":
+        result = {"score": round(100 * sum(r["correct"] for r in rows) / len(rows), 1),
+                  "unparsed": sum(r["parsed"] is None for r in rows)}
+        if task.chance:
+            result["chance"] = round(100 * task.chance, 1)
+        return result
+    if task.metric == "wer":
+        strict = scoring.wer(replies, refs)
+        lenient = scoring.wer(replies, refs, ignore_tones=True)
+        return {"score": round(100 * strict, 1), "score_ignoring_tones": round(100 * lenient, 1)}
+    if task.metric == "tool-calls":
+        return {"score": round(100 * sum(r["outcome"] == "correct" for r in rows) / len(rows), 1),
+                **{o: sum(r["outcome"] == o for r in rows) for o in OUTCOMES}}
+    first_lines = [r.strip().splitlines()[0] if r.strip() else "" for r in replies]
+    return {"score": round(scoring.chrf(first_lines, refs), 1)}
 
 
 def run(
@@ -84,78 +134,26 @@ def run(
         for lang in task.languages:
             if languages and lang not in languages:
                 continue
-            if task.audio:
-                # FLEURS clips are streamed from the start of the archive, so take the
-                # first n rather than a random sample of the whole split.
-                items = task.load(lang, n or 50)
-            else:
-                items = data.sample(task.load(lang), n, seed)
-            rows, hyps, refs = [], [], []
-            failures = 0
-            t0 = time.time()
-            for k, item in enumerate(items, 1):
-                call = None
+            items = _items(task, lang, n, seed)
+            rows, replies, failures, started = [], [], 0, time.time()
+            for done, item in enumerate(items, 1):
                 try:
-                    if task.tools:
-                        response = client.chat(item.prompt, tools=item.meta["tools"],
-                                               temperature=0.0, max_tokens=task.max_tokens)
-                        call = response.tool_calls[0] if response.tool_calls else None
-                        reply = response.text
-                    elif task.audio:
-                        reply = client.transcribe(item.meta["audio"], language=lang)
-                    else:
-                        reply = client.chat(item.prompt, temperature=0.0,
-                                            max_tokens=task.max_tokens).text
+                    reply, call = _ask(client, task, item, lang)
                 except NAtlasError as e:
-                    reply, failures = "", failures + 1
+                    reply, call, failures = "", None, failures + 1
                     log.warning("%s failed: %s", item.id, e)
-                row = {"id": item.id, "reply": reply}
-                if task.tools:
-                    row["expected"] = item.gold or None
-                    row["called"] = call.name if call else None
-                    row["arguments"] = call.arguments if call else None
-                    row["outcome"] = scoring.tool_call_outcome(
-                        row["called"], row["arguments"] or {}, item.gold, item.meta["arguments"])
-                elif task.metric == "accuracy":
-                    row["gold"] = item.gold
-                    row["parsed"] = task.parse(reply)
-                    row["correct"] = _correct(task, row["parsed"], item.gold)
-                elif task.metric == "wer":
-                    row["gold"] = item.gold
-                    row["wer"] = round(100 * scoring.wer([reply], [item.gold]), 1)
-                    hyps.append(reply)
-                    refs.append(item.gold)
-                else:
-                    # MAFAND references are GPL-3.0, so they are not written out; the id
-                    # is the line number in the upstream test file.
-                    hyps.append(reply.strip().splitlines()[0] if reply.strip() else "")
-                    refs.append(item.gold)
-                rows.append(row)
+                rows.append(_row(task, item, reply, call))
+                replies.append(reply)
                 if progress:
-                    progress(name, lang, k, len(items))
+                    progress(name, lang, done, len(items))
 
-            result = {"task": name, "language": lang, "n": len(items), "metric": task.metric,
-                      "errors": failures, "seconds": round(time.time() - t0, 1)}
-            if task.tools:
-                result["score"] = round(
-                    100 * sum(r["outcome"] == "correct" for r in rows) / len(rows), 1)
-                result.update({o: sum(r["outcome"] == o for r in rows) for o in OUTCOMES})
-            elif task.metric == "accuracy":
-                result["score"] = round(100 * sum(r["correct"] for r in rows) / len(rows), 1)
-                result["unparsed"] = sum(r["parsed"] is None for r in rows)
-                if task.chance:
-                    result["chance"] = round(100 * task.chance, 1)
-            elif task.metric == "wer":
-                result["score"] = round(100 * scoring.wer(hyps, refs), 1)
-                result["score_ignoring_tones"] = round(
-                    100 * scoring.wer(hyps, refs, ignore_tones=True), 1)
-            else:
-                result["score"] = round(scoring.chrf(hyps, refs), 1)
-            summary["results"].append(result)
-
+            summary["results"].append({
+                "task": name, "language": lang, "n": len(items), "metric": task.metric,
+                "errors": failures, "seconds": round(time.time() - started, 1),
+                **_score(task, rows, replies, [i.gold for i in items]),
+            })
             with (out_dir / f"{name}-{lang}.jsonl").open("w", encoding="utf-8") as f:
-                for row in rows:
-                    f.write(json.dumps(row, ensure_ascii=False) + "\n")
+                f.writelines(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
             (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     summary["finished"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))

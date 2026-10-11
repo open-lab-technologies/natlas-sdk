@@ -9,6 +9,7 @@ SYSTEM_PROMPT = (
     "You are a friendly assistant and you are here to help."
 )
 TEMPERATURE = 0.1
+MAX_TOKENS = 512
 # Not part of the OpenAI API, so the client never sends it unasked. `natlas serve`
 # applies it by default; with vLLM, pass repetition_penalty=1.12 to chat() yourself.
 REPETITION_PENALTY = 1.12

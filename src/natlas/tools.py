@@ -39,7 +39,9 @@ def _schema(annotation: Any) -> dict[str, Any]:
         return {"enum": list(args)}
     if origin in (Union, types.UnionType):
         options = [a for a in args if a is not type(None)]
-        return _schema(options[0]) if len(options) == 1 else {"anyOf": [_schema(a) for a in options]}
+        if len(options) == 1:
+            return _schema(options[0])
+        return {"anyOf": [_schema(a) for a in options]}
     if origin in (list, tuple, set, frozenset) or annotation in (list, tuple, set):
         return {"type": "array", "items": _schema(args[0])} if args else {"type": "array"}
     if origin is dict or annotation is dict:

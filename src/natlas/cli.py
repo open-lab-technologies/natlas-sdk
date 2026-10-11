@@ -1,4 +1,4 @@
-"""`natlas` command line: download, serve, chat, translate, transcribe."""
+"""The `natlas` command line."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _serve(args: argparse.Namespace) -> None:
     from .server import create_app
 
     path = args.model or default_model_path(args.quant)
-    engine = LlamaCppEngine(path, n_ctx=args.ctx)
+    engine = LlamaCppEngine(path, n_ctx=args.ctx, date=args.date)
     asr = None
     if args.asr:
         from .asr import SpeechRecogniser
@@ -112,6 +112,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--ctx", type=int, default=8192, help="Context window in tokens")
     p.add_argument("--asr", action="store_true", help="Enable /v1/audio/transcriptions")
     p.add_argument("--api-key", help="Require this bearer token (default: $NATLAS_API_KEY)")
+    p.add_argument("--date", help='Date written into prompts, such as "10 Oct 2026" '
+                   "(default: today). Pin it to reproduce a benchmark run.")
 
     p = sub.add_parser("chat", help="Chat in the terminal, or answer one prompt")
     p.add_argument("prompt", nargs="*")

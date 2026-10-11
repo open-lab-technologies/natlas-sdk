@@ -57,7 +57,8 @@ class ChatMessage(BaseModel):
         parts = []
         for part in value:
             if part.get("type") != "text":
-                raise ValueError(f"Unsupported content part {part.get('type')!r}; N-ATLAS is text-only")
+                raise ValueError(
+                    f"Unsupported content part {part.get('type')!r}; N-ATLAS is text-only")
             parts.append(part.get("text", ""))
         return "\n".join(parts)
 
@@ -76,7 +77,7 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
     temperature: float = defaults.TEMPERATURE
     top_p: float = 0.95
-    max_tokens: int | None = 512
+    max_tokens: int | None = defaults.MAX_TOKENS
     repetition_penalty: float = defaults.REPETITION_PENALTY
     stop: str | list[str] | None = None
     stream: bool = False
@@ -120,17 +121,40 @@ def _completion(completion_id: str, created: int, message: dict[str, Any], finis
     }
 
 
+def _sse(body: dict[str, Any]) -> str:
+    return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
+
+
+def _chunk(completion_id: str, created: int, delta: dict[str, Any], finish: str | None) -> str:
+    return _sse({"id": completion_id, "object": "chat.completion.chunk", "created": created,
+                 "model": MODEL_ID,
+                 "choices": [{"index": 0, "delta": delta, "finish_reason": finish}]})
+
+
 async def _tool_call_events(completion_id: str, created: int,
                             tool_call: dict[str, Any]) -> AsyncIterator[str]:
-    def chunk(delta: dict[str, Any], finish: str | None) -> str:
-        body = {"id": completion_id, "object": "chat.completion.chunk", "created": created,
-                "model": MODEL_ID,
-                "choices": [{"index": 0, "delta": delta, "finish_reason": finish}]}
-        return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
+    yield _chunk(completion_id, created, {"role": "assistant", "content": None}, None)
+    yield _chunk(completion_id, created, {"tool_calls": [{"index": 0, **tool_call}]}, None)
+    yield _chunk(completion_id, created, {}, "tool_calls")
+    yield "data: [DONE]\n\n"
 
-    yield chunk({"role": "assistant", "content": None}, None)
-    yield chunk({"tool_calls": [{"index": 0, **tool_call}]}, None)
-    yield chunk({}, "tool_calls")
+
+async def _text_events(completion_id: str, created: int, generation: _Generation,
+                       first: Chunk | None) -> AsyncIterator[str]:
+    finish, chunk = "stop", first
+    try:
+        yield _chunk(completion_id, created, {"role": "assistant"}, None)
+        while chunk is not None:
+            if chunk.text:
+                yield _chunk(completion_id, created, {"content": chunk.text}, None)
+            finish = chunk.finish_reason or finish
+            chunk = await generation.next()
+        yield _chunk(completion_id, created, {}, finish)
+    except Exception as e:  # noqa: BLE001  headers are sent; report it in the stream
+        yield _sse({"error": {"message": str(e), "type": "server_error"}})
+    finally:
+        # Runs when the client hangs up too, so the engine is released.
+        generation.stop()
     yield "data: [DONE]\n\n"
 
 
@@ -264,16 +288,32 @@ def create_app(
                      for l in LANGUAGES.values()]
         return {"object": "list", "data": data}
 
+    async def decide_tool(req: ChatRequest, messages: list[dict[str, Any]],
+                          params: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
+        try:
+            schema, allow_none = call_schema(req.tools or [], req.tool_choice)
+        except ToolChoiceError as e:
+            raise HTTPException(400, str(e)) from e
+        if allow_none:
+            messages = [{**messages[0], "content": messages[0]["content"] + AUTO_INSTRUCTION},
+                        *messages[1:]]
+        generation, first = await start(engine.generate(
+            messages, **params, tools=req.tools, json_schema=schema))
+        decision, _ = await collect(generation, first)
+        try:
+            return parse_call(decision)
+        except (ValueError, KeyError) as e:  # reply was cut off by max_tokens
+            raise HTTPException(400, f"Tool call was incomplete; raise max_tokens ({e})") from e
+
     @app.post("/v1/chat/completions")
     async def chat(req: ChatRequest):
         messages = prepare(req)
-        stop = [req.stop] if isinstance(req.stop, str) else (req.stop or [])
         params: dict[str, Any] = {
             "temperature": req.temperature,
             "top_p": req.top_p,
-            "max_tokens": req.max_tokens or 512,
+            "max_tokens": req.max_tokens or defaults.MAX_TOKENS,
             "repetition_penalty": req.repetition_penalty,
-            "stop": stop,
+            "stop": [req.stop] if isinstance(req.stop, str) else (req.stop or []),
         }
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
         created = int(time.time())
@@ -281,70 +321,25 @@ def create_app(
 
         call = None
         if req.tools and req.tool_choice != "none":
-            try:
-                schema, allow_none = call_schema(req.tools, req.tool_choice)
-            except ToolChoiceError as e:
-                raise HTTPException(400, str(e)) from e
-            decision_messages = messages
-            if allow_none:
-                decision_messages = [dict(messages[0]), *messages[1:]]
-                decision_messages[0]["content"] += AUTO_INSTRUCTION
-            generation, first = await start(engine.generate(
-                decision_messages, **params, tools=req.tools, json_schema=schema))
-            decision, _ = await collect(generation, first)
-            try:
-                call = parse_call(decision)
-            except (ValueError, KeyError) as e:  # reply was cut off by max_tokens
-                raise HTTPException(400, f"Tool call was incomplete; raise max_tokens ({e})") from e
-
+            call = await decide_tool(req, messages, params)
         if call is not None:
             name, arguments = call
+            arguments_json = json.dumps(arguments, ensure_ascii=False)
             tool_call = {"id": f"call_{uuid.uuid4().hex[:24]}", "type": "function",
-                         "function": {"name": name,
-                                      "arguments": json.dumps(arguments, ensure_ascii=False)}}
-            prompt_tokens = engine.count_prompt_tokens(messages)
-            completion_tokens = engine.count_tokens(tool_call["function"]["arguments"])
+                         "function": {"name": name, "arguments": arguments_json}}
             if req.stream:
-                return StreamingResponse(
-                    _tool_call_events(completion_id, created, tool_call),
-                    media_type="text/event-stream")
+                return StreamingResponse(_tool_call_events(completion_id, created, tool_call),
+                                         media_type="text/event-stream")
             return _completion(completion_id, created,
                                {"role": "assistant", "content": None, "tool_calls": [tool_call]},
-                               "tool_calls", prompt_tokens, completion_tokens)
+                               "tool_calls", engine.count_prompt_tokens(messages),
+                               engine.count_tokens(arguments_json))
 
         generation, first = await start(engine.generate(messages, **params,
                                                          json_schema=answer_schema))
-
         if req.stream:
-            def frame(body: dict[str, Any]) -> str:
-                return f"data: {json.dumps(body, ensure_ascii=False)}\n\n"
-
-            def delta(content: dict[str, str], finish: str | None) -> str:
-                return frame({
-                    "id": completion_id, "object": "chat.completion.chunk",
-                    "created": created, "model": MODEL_ID,
-                    "choices": [{"index": 0, "delta": content, "finish_reason": finish}],
-                })
-
-            async def events() -> AsyncIterator[str]:
-                finish, chunk = "stop", first
-                try:
-                    yield delta({"role": "assistant"}, None)
-                    while chunk is not None:
-                        if chunk.text:
-                            yield delta({"content": chunk.text}, None)
-                        finish = chunk.finish_reason or finish
-                        chunk = await generation.next()
-                    yield delta({}, finish)
-                except Exception as e:  # noqa: BLE001  headers are sent; report it in the stream
-                    yield frame({"error": {"message": str(e), "type": "server_error"}})
-                finally:
-                    # Runs when the client hangs up too, so the engine is released.
-                    generation.stop()
-                yield "data: [DONE]\n\n"
-
-            return StreamingResponse(events(), media_type="text/event-stream")
-
+            return StreamingResponse(_text_events(completion_id, created, generation, first),
+                                     media_type="text/event-stream")
         text, finish = await collect(generation, first)
         return _completion(completion_id, created, {"role": "assistant", "content": text}, finish,
                            engine.count_prompt_tokens(messages), engine.count_tokens(text))
@@ -374,7 +369,7 @@ def create_app(
             raise HTTPException(400, "Empty audio file")
         try:
             text = asr.transcribe(data, lang.code)
-        except Exception as e:  # decoding errors from librosa/ffmpeg surface here
+        except Exception as e:  # undecodable audio surfaces here in many exception types
             raise HTTPException(422, f"Could not transcribe audio: {e}") from e
         if response_format == "text":
             return PlainTextResponse(text)

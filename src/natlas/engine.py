@@ -56,8 +56,14 @@ class Engine(Protocol):
 
 class LlamaCppEngine:
     EOT = "<|eot_id|>"
+    # Compiling a grammar from a schema takes a noticeable fraction of a second,
+    # and clients usually send the same few schemas over and over.
+    GRAMMAR_CACHE_SIZE = 64
 
-    def __init__(self, model_path: str | Path, n_ctx: int = 8192, n_gpu_layers: int = -1):
+    def __init__(self, model_path: str | Path, n_ctx: int = 8192, n_gpu_layers: int = -1,
+                 date: str | None = None):
+        """`date` pins the date written into every prompt, as "10 Oct 2026". Replies
+        depend on it, so benchmark runs are only comparable with the same date."""
         llama_cpp = require("llama_cpp", "server")
         sandbox = require("jinja2.sandbox", "server")
 
@@ -65,6 +71,7 @@ class LlamaCppEngine:
         if not path.exists():
             raise FileNotFoundError(f"Model file not found: {path}. Run `natlas download` first.")
         self.name = path.name
+        self.date = date
         self.llm = llama_cpp.Llama(
             model_path=str(path), n_ctx=n_ctx, n_gpu_layers=n_gpu_layers, verbose=False
         )
@@ -93,7 +100,7 @@ class LlamaCppEngine:
             tools_in_user_message=False,
             add_generation_prompt=True,
             bos_token="",  # llama.cpp adds BOS itself when tokenising
-            date_string=datetime.now().astimezone().strftime("%d %b %Y"),
+            date_string=self.date or datetime.now().astimezone().strftime("%d %b %Y"),
         )
 
     def _grammar(self, schema: dict[str, Any]) -> Any:
@@ -103,7 +110,7 @@ class LlamaCppEngine:
                 self._grammars[key] = self._grammar_cls.from_json_schema(key, verbose=False)
             except Exception as e:  # llama.cpp raises several types here
                 raise ValueError(f"Cannot enforce this JSON schema: {e}") from e
-            if len(self._grammars) > 64:
+            if len(self._grammars) > self.GRAMMAR_CACHE_SIZE:
                 self._grammars.pop(next(iter(self._grammars)))
         return self._grammars[key]
 

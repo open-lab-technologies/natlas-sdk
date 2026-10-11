@@ -198,6 +198,9 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
   The Hausa, Igbo and Yoruba questions are not reviewed by native speakers.
 - N-ATLAS was trained partly on open datasets, so some test items may have been
   seen in training.
+- The model's chat template writes today's date into every prompt, so replies
+  drift from one day to the next. These runs used `natlas serve --date "10 Oct 2026"`;
+  with the same date, a rerun reproduces them exactly.
 
 Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
 (Apache-2.0), [MAFAND-MT](https://github.com/masakhane-io/lafand-mt) (GPL-3.0)
