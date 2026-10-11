@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import random
 import time
 from collections.abc import AsyncIterator, Callable, Iterator, Sequence
@@ -29,13 +28,10 @@ from .errors import (
     status_error,
 )
 from .languages import get_language
+from .settings import Settings, validate_base_url
 from .tools import ToolSpec, to_tool
 from .types import ChatResponse, ToolCall, Usage
 
-DEFAULT_BASE_URL = "http://localhost:8000/v1"
-DEFAULT_MODEL = "n-atlas"
-DEFAULT_TIMEOUT = 120.0
-DEFAULT_MAX_RETRIES = 2
 RETRYABLE_STATUS = frozenset({408, 409, 429, 500, 502, 503, 504})
 
 Message = dict[str, Any]
@@ -89,17 +85,19 @@ class _Base:
         api_key: str | None,
         model: str | None,
         system_prompt: str | None,
-        timeout: float,
-        max_retries: int,
+        timeout: float | None,
+        max_retries: int | None,
+        settings: Settings | None,
     ):
-        self.base_url = (base_url or os.getenv("NATLAS_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-        self.api_key = api_key or os.getenv("NATLAS_API_KEY")
+        settings = settings or Settings.from_env()
+        self.base_url = validate_base_url(base_url) if base_url else settings.base_url
+        self.api_key = api_key or settings.api_key
         # Servers name the model differently: "n-atlas" for `natlas serve`, the
         # Hugging Face id for vLLM, the tag you pulled for Ollama.
-        self.model = model or os.getenv("NATLAS_MODEL") or DEFAULT_MODEL
+        self.model = model or settings.model
         self.system_prompt = system_prompt
-        self.timeout = timeout
-        self.max_retries = max_retries
+        self.timeout = settings.timeout if timeout is None else timeout
+        self.max_retries = settings.max_retries if max_retries is None else max_retries
         self._headers = {"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}
 
     def _messages(self, prompt: Prompt, system: str | None) -> list[Message]:
@@ -276,12 +274,13 @@ class NAtlas(_Base):
         api_key: str | None = None,
         model: str | None = None,
         system_prompt: str | None = defaults.SYSTEM_PROMPT,
-        timeout: float = DEFAULT_TIMEOUT,
-        max_retries: int = DEFAULT_MAX_RETRIES,
+        timeout: float | None = None,
+        max_retries: int | None = None,
         http_client: httpx.Client | None = None,
+        settings: Settings | None = None,
     ):
-        super().__init__(base_url, api_key, model, system_prompt, timeout, max_retries)
-        self._http = http_client or httpx.Client(timeout=timeout)
+        super().__init__(base_url, api_key, model, system_prompt, timeout, max_retries, settings)
+        self._http = http_client or httpx.Client(timeout=self.timeout)
 
     def close(self) -> None:
         self._http.close()
@@ -448,12 +447,13 @@ class AsyncNAtlas(_Base):
         api_key: str | None = None,
         model: str | None = None,
         system_prompt: str | None = defaults.SYSTEM_PROMPT,
-        timeout: float = DEFAULT_TIMEOUT,
-        max_retries: int = DEFAULT_MAX_RETRIES,
+        timeout: float | None = None,
+        max_retries: int | None = None,
         http_client: httpx.AsyncClient | None = None,
+        settings: Settings | None = None,
     ):
-        super().__init__(base_url, api_key, model, system_prompt, timeout, max_retries)
-        self._http = http_client or httpx.AsyncClient(timeout=timeout)
+        super().__init__(base_url, api_key, model, system_prompt, timeout, max_retries, settings)
+        self._http = http_client or httpx.AsyncClient(timeout=self.timeout)
 
     async def close(self) -> None:
         await self._http.aclose()

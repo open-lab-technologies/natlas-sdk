@@ -19,6 +19,7 @@ from .errors import (
     ToolLoopError,
 )
 from .languages import LANGUAGES, Language, get_language
+from .settings import ConfigError, Settings
 from .tools import function_tool
 from .types import ChatResponse, ToolCall, Usage
 
@@ -33,12 +34,14 @@ __all__ = [
     "AuthenticationError",
     "BadRequestError",
     "ChatResponse",
+    "ConfigError",
     "InternalServerError",
     "Language",
     "NAtlas",
     "NAtlasError",
     "NotFoundError",
     "RateLimitError",
+    "Settings",
     "StructuredOutputError",
     "ToolCall",
     "ToolLoopError",

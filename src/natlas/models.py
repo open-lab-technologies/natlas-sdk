@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import os
 from collections.abc import Callable
 from pathlib import Path
 
 import httpx
+
+from .settings import Settings
 
 # Community GGUF conversion of NCAIR1/N-ATLaS. The official repo ships only
 # safetensors, which need a CUDA GPU and ~16 GB to run unquantised. Pinned to a
@@ -23,7 +24,7 @@ class DownloadError(Exception):
 
 
 def cache_dir() -> Path:
-    return Path(os.getenv("NATLAS_CACHE", Path.home() / ".cache" / "natlas"))
+    return Settings.from_env().cache_dir
 
 
 def gguf_filename(quant: str) -> str:
@@ -33,8 +34,8 @@ def gguf_filename(quant: str) -> str:
 
 
 def default_model_path(quant: str = DEFAULT_QUANT) -> Path:
-    env = os.getenv("NATLAS_MODEL_PATH")
-    return Path(env).expanduser() if env else cache_dir() / gguf_filename(quant)
+    settings = Settings.from_env()
+    return settings.model_path or settings.cache_dir / gguf_filename(quant)
 
 
 def expected_file(filename: str) -> tuple[str, int]:

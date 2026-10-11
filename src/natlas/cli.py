@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 from ._extras import MissingExtraError, require
 from .client import NAtlas
 from .errors import NAtlasError
 from .models import DEFAULT_QUANT, QUANTS, DownloadError, default_model_path, download
+from .settings import Settings
 
 
 def _client(args: argparse.Namespace, **kwargs: object) -> NAtlas:
@@ -40,7 +40,7 @@ def _serve(args: argparse.Namespace) -> None:
         from .asr import SpeechRecogniser
 
         asr = SpeechRecogniser()
-    api_key = args.api_key or os.getenv("NATLAS_API_KEY")
+    api_key = args.api_key or Settings.from_env().api_key
     if not api_key and args.host not in ("127.0.0.1", "localhost", "::1"):
         print(f"warning: serving on {args.host} with no API key; anyone who can reach this "
               "machine can use the model. Set --api-key or NATLAS_API_KEY.", file=sys.stderr)
@@ -98,6 +98,8 @@ def main(argv: list[str] | None = None) -> None:
                         "or n-atlas)")
     sub = parser.add_subparsers(dest="command", required=True)
 
+    sub.add_parser("config", help="Show the settings in effect, with the API key masked")
+
     p = sub.add_parser("download", help="Download quantised N-ATLAS weights")
     p.add_argument("--quant", default=DEFAULT_QUANT, choices=QUANTS,
                    help="Q4_K_M or larger recommended; Q2_K and Q3_K_M lose noticeable quality")
@@ -133,7 +135,10 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
     try:
-        if args.command == "download":
+        if args.command == "config":
+            for name, value in Settings.from_env().describe().items():
+                print(f"{name:20} {value}")
+        elif args.command == "download":
             print(download(args.quant, progress=_download_progress))
         elif args.command == "serve":
             _serve(args)
