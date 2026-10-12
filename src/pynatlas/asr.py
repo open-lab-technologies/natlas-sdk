@@ -1,4 +1,4 @@
-"""Speech to text with the official N-ATLAS speech models (Whisper-small fine-tunes).
+"""Speech to text with the official N-ATLaS speech models (Whisper-small fine-tunes).
 
 The models are gated on Hugging Face: accept the terms on each model page and
 log in with `hf auth login` before first use.

@@ -1,14 +1,18 @@
 # pynatlas
 
-Python SDK for N-ATLAS. Layout: `src/pynatlas/` (client, types, tools, errors,
-settings, defaults, server, _toolcalls, engine, asr, models, cli, bench/),
-`playground/` (Streamlit, not packaged), `examples/`, `bench-results/`
-(published runs).
+Python SDK for N-ATLaS. Layout:
+
+- `src/pynatlas/`: clients (`client`, `types`, `tools`, `errors`, `settings`,
+  `defaults`, `languages` and its `language_profile.json`), the server
+  (`server`, `_toolcalls`, `engine`, `asr`), `models`, `cli` and `bench/`
+- `scripts/`: rebuild and evaluate the language profile
+- `playground/` (Streamlit, not packaged), `examples/`, `Dockerfile`
+- `bench-results/`: published runs, cited by the README
 
 ## Commands
 
 ```bash
-uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,asr,bench]" --group dev
+uv venv && uv pip install -e ".[server,asr,bench]" --group dev   # GPU: set CMAKE_ARGS, see README
 pytest                                  # unit tests, no model needed
 ruff check src tests playground examples
 mypy                                    # strict, must stay clean

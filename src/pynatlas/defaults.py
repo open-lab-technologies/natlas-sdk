@@ -1,4 +1,4 @@
-"""Settings from the N-ATLAS model card.
+"""Settings from the N-ATLaS model card.
 
 The model was tuned with this system prompt; without it, answers drift towards
 generic Llama-3 behaviour.

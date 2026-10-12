@@ -1,4 +1,4 @@
-"""Browser playground for N-ATLAS: chat, translate, speak, and inspect benchmark runs.
+"""Browser playground for N-ATLaS: chat, translate, speak, and inspect benchmark runs.
 
     streamlit run playground/app.py
 """
@@ -15,7 +15,7 @@ import streamlit as st
 from pynatlas import LANGUAGES, NAtlas, NAtlasError
 from pynatlas.defaults import ATTRIBUTION, SYSTEM_PROMPT
 
-st.set_page_config(page_title="N-ATLAS Playground", layout="wide")
+st.set_page_config(page_title="N-ATLaS Playground", layout="wide")
 
 with st.sidebar:
     st.header("Endpoint")

@@ -1,7 +1,7 @@
 [project]
 name = "pynatlas"
 dynamic = ["version"]
-description = "Python SDK, OpenAI-compatible server and benchmark kit for N-ATLAS, Nigeria's open multilingual LLM"
+description = "Python SDK, OpenAI-compatible server and benchmark kit for N-ATLaS, Nigeria's open multilingual LLM"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 # Extras are the runtime features users opt into. The core install is the HTTP
-# client only, so apps that call a hosted N-ATLAS endpoint pull in httpx and nothing else.
+# client only, so apps that call a hosted N-ATLaS endpoint pull in httpx and nothing else.
 [project.optional-dependencies]
 server = [
     "fastapi>=0.115",

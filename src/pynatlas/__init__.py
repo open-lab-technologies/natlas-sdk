@@ -1,4 +1,4 @@
-"""Python SDK for N-ATLAS, Nigeria's open multilingual language model.
+"""Python SDK for N-ATLaS, Nigeria's open multilingual language model.
 
 Importing the package loads the HTTP clients only. The local server, speech
 recognition and benchmarks live in submodules with their own optional extras.

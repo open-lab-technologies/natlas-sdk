@@ -1,7 +1,7 @@
 """Inference backends for `pynatlas serve`.
 
 The server talks to any object that satisfies `Engine`. `LlamaCppEngine` runs
-GGUF builds of N-ATLAS through llama.cpp; other backends only need to
+GGUF builds of N-ATLaS through llama.cpp; other backends only need to
 implement the same three methods.
 """
 
@@ -88,7 +88,7 @@ class LlamaCppEngine:
     def render(self, messages: Messages, tools: list[dict[str, Any]] | None = None) -> str:
         """Apply the model's chat template.
 
-        Rendered here rather than by llama.cpp because the N-ATLAS template stamps
+        Rendered here rather than by llama.cpp because the N-ATLaS template stamps
         today's date into the system header, and llama.cpp's formatter leaves it at
         the template's placeholder. Tools go in the system message: in the user
         message, where the template puts them by default, the model calls a tool

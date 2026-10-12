@@ -1,4 +1,4 @@
-"""Languages N-ATLAS supports, the official speech model for each, and detection."""
+"""Languages N-ATLaS supports, the official speech model for each, and detection."""
 
 from __future__ import annotations
 
@@ -53,9 +53,9 @@ def detect_language(text: str) -> str | None:
     """The code ("en", "ha", "ig" or "yo") of the language `text` is written in.
 
     Runs offline from character patterns, with no model call. It assumes the text
-    is in one of the four languages and returns None when there is nothing to go on.
-    Held-out accuracy is above 99%, about 96% for texts of five words or fewer,
-    and holds for Yoruba and Igbo typed without tone marks.
+    is in one of the four languages, so text in any other language still gets one
+    of these codes. Returns None when there is nothing to go on. Accuracy is
+    measured by scripts/evaluate_language_detection.py.
     """
     grams = trigrams(text)
     if not any(ch.isalpha() for ch in text):
