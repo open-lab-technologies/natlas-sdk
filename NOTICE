@@ -1,5 +1,6 @@
 pynatlas
-Copyright the pynatlas authors. Licensed under the Apache License, Version 2.0 (see LICENSE).
+Copyright 2026 Open Lab Technologies. Licensed under the Apache License, Version 2.0
+(see LICENSE).
 
 This package's code is Apache-2.0. The N-ATLaS language model and the NCAIR1
 speech models it downloads and serves are not: they are released by Awarri

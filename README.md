@@ -283,12 +283,12 @@ NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests
 
 ## Licence
 
-The code is Apache-2.0. The N-ATLaS and speech models it runs are under the
-N-ATLaS Open-Source Research and Innovation License, which requires
-attribution in all public use and caps deployments at 1,000 active end-users a
-month without a commercial licence. Read the
-[NOTICE](https://github.com/Nazehs/natlas-sdk/blob/main/NOTICE)
-before deploying.
+The code is Apache-2.0, maintained by Open Lab Technologies. The N-ATLaS and
+speech models it runs are under the N-ATLaS Open-Source Research and Innovation
+License, which requires attribution in all public use and caps deployments at
+1,000 active end-users a month without a commercial licence. Read the
+[NOTICE](https://github.com/Nazehs/natlas-sdk/blob/main/NOTICE) before
+deploying.
 
 N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation
 and Digital Economy, and powered by Awarri Technologies.
