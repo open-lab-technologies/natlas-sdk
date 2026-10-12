@@ -45,4 +45,4 @@ First release.
   tool-calling set, with every reply saved for audit.
 - A Streamlit playground and runnable examples.
 
-[0.1.0]: https://github.com/Nazehs/natlas-sdk/releases/tag/v0.1.0
+[0.1.0]: https://github.com/open-lab-technologies/natlas-sdk/releases/tag/v0.1.0

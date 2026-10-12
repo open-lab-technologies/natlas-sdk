@@ -13,7 +13,7 @@ reply; `pynatlas config` shows the settings to paste alongside.
 ## Setting up
 
 ```bash
-git clone https://github.com/Nazehs/natlas-sdk && cd natlas-sdk
+git clone https://github.com/open-lab-technologies/natlas-sdk && cd natlas-sdk
 uv venv && uv pip install -e ".[server,asr,bench]" --group dev
 ```
 
