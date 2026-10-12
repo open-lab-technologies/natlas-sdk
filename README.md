@@ -237,7 +237,7 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
   the strict Yoruba WER.
 - Tool calling uses questions and tools kept out of its design. Plain prompting
   scores 21 of 40 and calls a tool for every question that needs none; this SDK
-  scores 34 of 40. Non-English questions are not reviewed by native speakers.
+  scores 35 of 40. Non-English questions are not reviewed by native speakers.
 - Language detection is trained on AfriXNLI dev and scored on its test split.
 - Some test items may have been in N-ATLaS's training data.
 - Runs used `pynatlas serve --date "10 Oct 2026"`; the template dates every
