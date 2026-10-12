@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from . import defaults
 from ._extras import MissingExtraError, require
 from .client import NAtlas
 from .errors import NAtlasError
@@ -44,6 +45,8 @@ def _serve(args: argparse.Namespace) -> None:
     if not api_key and args.host not in ("127.0.0.1", "localhost", "::1"):
         print(f"warning: serving on {args.host} with no API key; anyone who can reach this "
               "machine can use the model. Set --api-key or NATLAS_API_KEY.", file=sys.stderr)
+    print(defaults.ATTRIBUTION, "Use is capped at 1,000 active end-users a month; see NOTICE.",
+          file=sys.stderr)
     print(f"Serving {engine.name} on http://{args.host}:{args.port}/v1", file=sys.stderr)
     uvicorn.run(create_app(engine, asr, api_key=api_key), host=args.host, port=args.port,
                 log_level="warning")

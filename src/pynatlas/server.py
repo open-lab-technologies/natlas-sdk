@@ -278,7 +278,8 @@ def create_app(
 
     @app.get("/health")
     def health() -> dict[str, Any]:
-        return {"status": "ok", "model": engine.name, "asr": asr is not None}
+        return {"status": "ok", "model": engine.name, "asr": asr is not None,
+                "attribution": defaults.ATTRIBUTION}
 
     @app.get("/v1/models")
     def models() -> dict[str, Any]:

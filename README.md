@@ -238,5 +238,10 @@ NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests
 
 ## Licence
 
-Apache-2.0. The N-ATLAS weights and speech models are released by NCAIR under
-their own terms.
+The code is Apache-2.0. The N-ATLaS and speech models it runs are under the
+N-ATLaS Open-Source Research and Innovation License, which requires
+attribution in all public use and caps deployments at 1,000 active end-users a
+month without a commercial licence. See [NOTICE](NOTICE) before deploying.
+
+N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation
+and Digital Economy, and powered by Awarri Technologies.

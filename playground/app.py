@@ -13,7 +13,7 @@ import pandas as pd
 import streamlit as st
 
 from pynatlas import LANGUAGES, NAtlas, NAtlasError
-from pynatlas.defaults import SYSTEM_PROMPT
+from pynatlas.defaults import ATTRIBUTION, SYSTEM_PROMPT
 
 st.set_page_config(page_title="N-ATLAS Playground", layout="wide")
 
@@ -26,6 +26,7 @@ with st.sidebar:
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
     max_tokens = st.slider("Max tokens", 32, 2048, 512, 32)
     system = st.text_area("System prompt", SYSTEM_PROMPT, height=120)
+    st.caption(ATTRIBUTION)
 
 
 @st.cache_resource

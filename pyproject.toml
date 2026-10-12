@@ -5,6 +5,7 @@ description = "Python SDK, OpenAI-compatible server and benchmark kit for N-ATLA
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Nazeh Abel" }]
 keywords = ["n-atlas", "llm", "nigeria", "hausa", "igbo", "yoruba", "speech-recognition"]
 classifiers = [
@@ -81,7 +82,7 @@ path = "src/pynatlas/__init__.py"
 packages = ["src/pynatlas"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "README.md", "LICENSE"]
+include = ["src", "tests", "README.md", "LICENSE", "NOTICE"]
 
 [tool.ruff]
 line-length = 100
