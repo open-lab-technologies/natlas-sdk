@@ -31,7 +31,8 @@ def _schema(annotation: Any) -> dict[str, Any]:
     if annotation in _SCALARS:
         return {"type": _SCALARS[annotation]}
     if hasattr(annotation, "model_json_schema"):  # Pydantic model
-        return annotation.model_json_schema()
+        schema: dict[str, Any] = annotation.model_json_schema()
+        return schema
     if isinstance(annotation, type) and issubclass(annotation, enum.Enum):
         return {"enum": [m.value for m in annotation]}
     origin, args = typing.get_origin(annotation), typing.get_args(annotation)

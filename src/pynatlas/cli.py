@@ -13,8 +13,8 @@ from .models import DEFAULT_QUANT, QUANTS, DownloadError, default_model_path, do
 from .settings import Settings
 
 
-def _client(args: argparse.Namespace, **kwargs: object) -> NAtlas:
-    return NAtlas(base_url=args.base_url, model=args.model, **kwargs)
+def _client(args: argparse.Namespace, timeout: float | None = None) -> NAtlas:
+    return NAtlas(base_url=args.base_url, model=args.model, timeout=timeout)
 
 
 def _download_progress(done: int, total: int) -> None:

@@ -94,7 +94,7 @@ class LlamaCppEngine:
         message, where the template puts them by default, the model calls a tool
         for almost every request.
         """
-        return self._template.render(
+        prompt: str = self._template.render(
             messages=messages,
             tools=[t.get("function", t) for t in tools] if tools else None,
             tools_in_user_message=False,
@@ -102,6 +102,7 @@ class LlamaCppEngine:
             bos_token="",  # llama.cpp adds BOS itself when tokenising
             date_string=self.date or datetime.now().astimezone().strftime("%d %b %Y"),
         )
+        return prompt
 
     def _grammar(self, schema: dict[str, Any]) -> Any:
         key = json.dumps(schema, sort_keys=True)

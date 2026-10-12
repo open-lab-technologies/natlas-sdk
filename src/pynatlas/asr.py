@@ -113,7 +113,7 @@ class SpeechRecogniser:
             return_timestamps=False,
             generate_kwargs=generate_kwargs,
         )
-        return result["text"].strip()
+        return str(result["text"]).strip()
 
 
 def looks_looped(text: str, max_repeats: int = 3, max_n: int = 4) -> bool:

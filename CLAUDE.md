@@ -11,6 +11,7 @@ settings, defaults, server, _toolcalls, engine, asr, models, cli, bench/),
 uv venv && CMAKE_ARGS="-DGGML_METAL=on" uv pip install -e ".[server,asr,bench]" --group dev
 pytest                                  # unit tests, no model needed
 ruff check src tests playground examples
+mypy                                    # strict, must stay clean
 pynatlas serve --asr --api-key test-key   # then:
 NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests/test_live.py
 ```

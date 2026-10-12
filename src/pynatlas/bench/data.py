@@ -9,8 +9,10 @@ import csv
 import io
 import json
 import random
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -28,7 +30,7 @@ class Item:
     id: str
     prompt: str
     gold: str
-    meta: dict = field(default_factory=dict)
+    meta: dict[str, Any] = field(default_factory=dict)
 
 
 def _fetch(url: str, name: str) -> str:
@@ -155,8 +157,9 @@ def fleurs(lang: str, n: int) -> list[Item]:
                     if not member.isfile() or name not in transcripts:
                         continue
                     target = audio_dir / name
-                    if not target.exists():
-                        target.write_bytes(tar.extractfile(member).read())
+                    source = tar.extractfile(member)
+                    if source is not None and not target.exists():
+                        target.write_bytes(source.read())
                         have.append(name)
                     if len(set(have)) >= n:
                         break
@@ -171,14 +174,14 @@ def fleurs(lang: str, n: int) -> list[Item]:
 class _StreamReader(io.RawIOBase):
     """File-like view over an iterator of byte chunks, for streaming tarfile reads."""
 
-    def __init__(self, chunks):
+    def __init__(self, chunks: Iterator[bytes]):
         self._chunks = iter(chunks)
         self._buffer = b""
 
     def readable(self) -> bool:
         return True
 
-    def readinto(self, b) -> int:
+    def readinto(self, b: Any) -> int:
         while not self._buffer:
             try:
                 self._buffer = next(self._chunks)

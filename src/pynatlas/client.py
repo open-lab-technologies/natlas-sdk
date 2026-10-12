@@ -21,6 +21,7 @@ import httpx
 from . import defaults
 from .errors import (
     APIConnectionError,
+    APIStatusError,
     APITimeoutError,
     NAtlasError,
     StructuredOutputError,
@@ -154,7 +155,8 @@ class _Base:
         if isinstance(fmt, type) and hasattr(fmt, "model_json_schema"):
             wire = {"type": "json_schema", "json_schema": {
                 "name": fmt.__name__, "schema": fmt.model_json_schema(), "strict": True}}
-            return wire, fmt.model_validate_json
+            decode: Decoder = fmt.model_validate_json  # type: ignore[attr-defined]
+            return wire, decode
         if not isinstance(fmt, dict):
             raise TypeError("response_format must be a Pydantic model class or a dict")
         if fmt.get("type") == "text":
@@ -173,7 +175,8 @@ class _Base:
         )
 
     @staticmethod
-    def _audio_form(audio: Audio, language: str, model: str | None) -> tuple[dict, dict]:
+    def _audio_form(audio: Audio, language: str, model: str | None,
+                    ) -> tuple[dict[str, str], dict[str, tuple[str, bytes]]]:
         lang = get_language(language)
         if isinstance(audio, (str, Path)):
             path = Path(audio)
@@ -228,8 +231,11 @@ class _Base:
 
     @staticmethod
     def _raise_for_status(resp: httpx.Response) -> None:
-        if resp.is_success:
-            return
+        if not resp.is_success:
+            raise _Base._status_error(resp)
+
+    @staticmethod
+    def _status_error(resp: httpx.Response) -> APIStatusError:
         try:
             body = resp.json()
         except ValueError:
@@ -239,8 +245,8 @@ class _Base:
             err = body.get("error")
             server_message = err.get("message") if isinstance(err, dict) else err
             detail = server_message or body.get("detail") or body
-        raise status_error(resp.status_code,
-                           f"{resp.status_code} from {resp.request.url}: {detail}", body)
+        return status_error(resp.status_code,
+                            f"{resp.status_code} from {resp.request.url}: {detail}", body)
 
     def _retry_delay(self, attempt: int, resp: httpx.Response | None) -> float | None:
         """Seconds to wait before retrying, or None to stop."""
@@ -252,7 +258,7 @@ class _Base:
             retry_after = resp.headers.get("retry-after")
             if retry_after and retry_after.replace(".", "", 1).isdigit():
                 return min(float(retry_after), 60.0)
-        return min(0.5 * 2**attempt, 8.0) * (0.75 + random.random() / 2)
+        return min(0.5 * 2.0**attempt, 8.0) * (0.75 + random.random() / 2)
 
     @staticmethod
     def _connection_error(e: httpx.HTTPError, base_url: str) -> APIConnectionError:
@@ -405,7 +411,7 @@ class NAtlas(_Base):
                 resp.close()
                 delay = self._retry_delay(attempt, resp)
                 if delay is None:
-                    self._raise_for_status(resp)
+                    raise self._status_error(resp)
             time.sleep(delay)
             attempt += 1
         try:
@@ -431,7 +437,7 @@ class NAtlas(_Base):
         """
         data, files = self._audio_form(audio, language, model)
         resp = self._request("POST", "/audio/transcriptions", data=data, files=files)
-        return resp.json()["text"].strip()
+        return str(resp.json()["text"]).strip()
 
     def models(self) -> list[str]:
         resp = self._request("GET", "/models")
@@ -564,7 +570,7 @@ class AsyncNAtlas(_Base):
                 await resp.aclose()
                 delay = self._retry_delay(attempt, resp)
                 if delay is None:
-                    self._raise_for_status(resp)
+                    raise self._status_error(resp)
             await asyncio.sleep(delay)
             attempt += 1
         try:
@@ -584,7 +590,7 @@ class AsyncNAtlas(_Base):
     async def transcribe(self, audio: Audio, *, language: str, model: str | None = None) -> str:
         data, files = self._audio_form(audio, language, model)
         resp = await self._request("POST", "/audio/transcriptions", data=data, files=files)
-        return resp.json()["text"].strip()
+        return str(resp.json()["text"]).strip()
 
     async def models(self) -> list[str]:
         resp = await self._request("GET", "/models")

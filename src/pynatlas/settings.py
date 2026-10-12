@@ -10,6 +10,7 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 from urllib.parse import urlparse
 
 from .errors import NAtlasError
@@ -71,7 +72,7 @@ class Settings:
             value = env.get(name, "").strip()
             return value or None
 
-        values: dict = {}
+        values: dict[str, Any] = {}
         if (v := get("NATLAS_BASE_URL")) is not None:
             values["base_url"] = _base_url(v, "NATLAS_BASE_URL")
         if (v := get("NATLAS_API_KEY")) is not None:

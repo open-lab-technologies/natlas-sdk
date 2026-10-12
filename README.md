@@ -224,6 +224,7 @@ downloaded at run time. Full replies are in [bench-results](bench-results/).
 uv venv && uv pip install -e ".[server,asr,bench]" --group dev
 pytest                                   # unit tests, no model needed
 ruff check src tests playground examples
+mypy                                     # strict type check
 ```
 
 End-to-end tests run against a live server:

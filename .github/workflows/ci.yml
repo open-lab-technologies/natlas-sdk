@@ -22,5 +22,7 @@ jobs:
           uv pip install -e ".[bench]" --group dev
       - name: Lint
         run: uv run --no-sync ruff check src tests playground examples
+      - name: Type check
+        run: uv run --no-sync mypy
       - name: Test
         run: uv run --no-sync pytest -q

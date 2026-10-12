@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 _NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
 
@@ -29,7 +30,7 @@ def parse_number(reply: str) -> str | None:
     numbers = _NUMBER.findall(tail) or _NUMBER.findall(reply)
     if not numbers:
         return None
-    value = numbers[-1].replace(",", "").rstrip(".")
+    value = str(numbers[-1]).replace(",", "").rstrip(".")
     return value.removesuffix(".0")
 
 
@@ -44,9 +45,9 @@ def numbers_equal(a: str | None, b: str) -> bool:
 
 def chrf(hypotheses: list[str], references: list[str]) -> float:
     """Corpus chrF++ (character n-grams plus word bigrams), the MAFAND paper's metric."""
-    from sacrebleu.metrics import CHRF
+    from sacrebleu.metrics.chrf import CHRF
 
-    return CHRF(word_order=2).corpus_score(hypotheses, [references]).score
+    return float(CHRF(word_order=2).corpus_score(hypotheses, [references]).score)
 
 
 def normalise_transcript(text: str) -> str:
@@ -82,8 +83,8 @@ def wer(hypotheses: list[str], references: list[str], ignore_tones: bool = False
     return jiwer.wer([prep(r) for r in references], [prep(h) for h in hypotheses])
 
 
-def tool_call_outcome(called: str | None, arguments: dict, expected: str,
-                      expected_arguments: dict | None) -> str:
+def tool_call_outcome(called: str | None, arguments: dict[str, Any], expected: str,
+                      expected_arguments: dict[str, list[str]] | None) -> str:
     """One of "correct", "false_call", "missed_call", "wrong_tool" or "wrong_arguments".
 
     `expected` is "" when no tool should be called. An argument matches when its
