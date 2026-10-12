@@ -8,7 +8,7 @@ run one locally.
 ## Install
 
 ```bash
-pip install "pynatlas @ git+https://github.com/Nazehs/natlas-sdk"
+pip install pynatlas
 ```
 
 | Install | Adds | Size |
@@ -38,7 +38,7 @@ for piece in client.stream("Ka bayyana mini menene noma a takaice"):
 To run N-ATLAS locally:
 
 ```bash
-pip install "pynatlas[server] @ git+https://github.com/Nazehs/natlas-sdk"
+pip install "pynatlas[server]"
 pynatlas download      # 4.9 GB, 4-bit weights
 pynatlas serve         # http://127.0.0.1:8000/v1
 ```
@@ -258,7 +258,7 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
 Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
 (Apache-2.0), [MAFAND-MT](https://github.com/masakhane-io/lafand-mt) (GPL-3.0)
 and [FLEURS](https://huggingface.co/datasets/google/fleurs) (CC-BY-4.0), all
-downloaded at run time. Full replies are in [bench-results](bench-results/).
+downloaded at run time. Full replies are in [bench-results](https://github.com/Nazehs/natlas-sdk/tree/main/bench-results/).
 
 ## Known limitations
 
@@ -295,7 +295,7 @@ NATLAS_E2E_URL=http://127.0.0.1:8000/v1 NATLAS_E2E_API_KEY=test-key pytest tests
 The code is Apache-2.0. The N-ATLaS and speech models it runs are under the
 N-ATLaS Open-Source Research and Innovation License, which requires
 attribution in all public use and caps deployments at 1,000 active end-users a
-month without a commercial licence. See [NOTICE](NOTICE) before deploying.
+month without a commercial licence. See [NOTICE](https://github.com/Nazehs/natlas-sdk/blob/main/NOTICE) before deploying.
 
 N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation
 and Digital Economy, and powered by Awarri Technologies.

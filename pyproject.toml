@@ -12,6 +12,11 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Natural Language :: English",
@@ -68,6 +73,7 @@ playground = [
 [project.urls]
 Repository = "https://github.com/Nazehs/natlas-sdk"
 Issues = "https://github.com/Nazehs/natlas-sdk/issues"
+Changelog = "https://github.com/Nazehs/natlas-sdk/blob/main/CHANGELOG.md"
 
 [project.scripts]
 pynatlas = "pynatlas.cli:main"
@@ -83,7 +89,7 @@ path = "src/pynatlas/__init__.py"
 packages = ["src/pynatlas"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "README.md", "LICENSE", "NOTICE"]
+include = ["src", "tests", "README.md", "LICENSE", "NOTICE", "CHANGELOG.md"]
 
 [tool.ruff]
 line-length = 100
