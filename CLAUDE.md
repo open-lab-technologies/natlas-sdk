@@ -42,6 +42,12 @@ done. Unit tests use fakes and cannot catch model or llama.cpp behaviour.
   Free prompting called a tool for every question that needed none. Change
   this only with the held-out `pynatlas bench --tasks tool-calling` numbers, and
   never tune on `bench/tool_cases.json`, or its scores stop meaning anything.
+- `language_profile.json` is built by `scripts/build_language_profile.py` from
+  the AfriXNLI dev split only. Never add test-split or FLEURS text to it: those
+  are what `scripts/evaluate_language_detection.py` measures it on.
+- The Dockerfile keeps weights out of the image (they download to `/data`) and
+  runs as a non-root user. Build it after changing dependencies; CI builds it on
+  pushes to main.
 - The engine switches the repetition penalty off under a grammar: JSON repeats
   its punctuation by design and the penalty fights it.
 - Library code never prints. Progress goes through callbacks the CLI supplies,

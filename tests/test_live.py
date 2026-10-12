@@ -214,3 +214,17 @@ def test_openai_client_tools_and_parse():
         model="n-atlas", response_format=Sentiment,
         messages=[{"role": "user", "content": "Sentiment of: Mo dupe pupo!"}])
     assert parsed.choices[0].message.parsed.sentiment
+
+
+def test_helpers_on_the_real_model(client):
+    assert client.classify("The goods arrived broken and late.",
+                           ["complaint", "praise"]) == "complaint"
+    assert client.summarize("Gwamnatin jihar Kano ta bude sabbin makarantu goma a yau. "
+                            "Gwamna ya ce za a dauki malamai dari biyu.")
+
+
+@pytest.mark.usefixtures("asr_enabled")
+def test_voice_chat_on_real_speech(client):
+    audio, _ = _fleurs_clip("ha")
+    reply = client.voice_chat(audio, language="ha")
+    assert reply.transcript and reply.reply.text

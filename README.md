@@ -61,6 +61,22 @@ Requests carry standard OpenAI fields only. Provider-specific options pass
 through as keyword arguments, for example `client.chat(..., repetition_penalty=1.12)`
 on vLLM. Tested end to end against `pynatlas serve` and llama.cpp's server.
 
+### Helpers
+
+```python
+from pynatlas import detect_language
+
+detect_language("Bawo ni o se wa?")                       # 'yo', offline, no model call
+client.summarize(article)                                 # in the article's own language
+client.classify(message, ["complaint", "praise", "question"])
+client.voice_chat("voice-note.ogg", language="ha")        # transcript and reply
+```
+
+`detect_language` uses character patterns and scores above 99% on held-out
+text, with or without tone marks, and about 96% on texts of five words or
+fewer. `classify` enforces the label set as a schema, so the answer is always
+one of your labels.
+
 ### Tool calling
 
 Pass plain functions; type hints and the docstring become the tool definition.
@@ -95,8 +111,10 @@ client.chat("Classify: Kayan sun iso a makare.", response_format=Feedback).parse
 
 `response_format` also takes a JSON schema dict. `pynatlas serve`, vLLM and
 llama.cpp enforce the schema while generating, so the reply is always valid;
-elsewhere a mismatch raises `StructuredOutputError`. Pydantic is only needed if
-you pass a Pydantic model.
+elsewhere the client also reads JSON out of code fences and, if the reply still
+does not match, shows the model the error and asks once more
+(`format_retries`) before raising `StructuredOutputError`. Pydantic is only
+needed if you pass a Pydantic model.
 
 ### Async
 
@@ -111,7 +129,9 @@ async with AsyncNAtlas() as client:
 ### Errors and retries
 
 Connection failures and 408, 409, 429 and 5xx responses are retried with
-backoff, honouring `Retry-After`. Everything raised derives from `NAtlasError`:
+backoff, honouring `Retry-After`. A retried chat request can run the model
+twice; pass `max_retries=0` where that matters. Everything raised derives from
+`NAtlasError`:
 
 | Exception | When |
 |---|---|
@@ -152,13 +172,42 @@ pynatlas serve --host 0.0.0.0 --api-key "$(openssl rand -hex 16)"  # to share it
 ```
 
 It handles one request at a time; for concurrent users serve the official
-weights with vLLM. Other backends plug in through the `Engine` protocol in
+weights with vLLM (see Deployment). Other backends plug in through the `Engine` protocol in
 `pynatlas.engine`, and speech backends through `pynatlas.asr.Transcriber`.
 
 The speech models (`NCAIR1/Hausa-ASR`, `Igbo-ASR`, `Yoruba-ASR`,
 `NigerianAccentedEnglish`) are gated: accept the terms on each model page on
 Hugging Face, then run `hf auth login`. WhatsApp voice notes, wav, mp3 and flac
 decode directly; m4a and webm need ffmpeg.
+
+## Deployment
+
+### Docker
+
+```bash
+docker build -t pynatlas .
+docker run -p 8000:8000 -v pynatlas-data:/data -e NATLAS_API_KEY=change-me pynatlas
+```
+
+The weights download to the `/data` volume on first start (set `NATLAS_QUANT`
+to change the build, or mount your own and set `NATLAS_MODEL_PATH`). Add
+speech recognition with `--build-arg EXTRAS=server,asr`, pass `HF_TOKEN`, and
+append `--asr` to `docker run`. The image runs as a non-root user and reports
+health on `/health`.
+
+### On a GPU
+
+The client does not change: point `base_url` at the GPU host.
+
+- Full-precision weights with vLLM: `vllm serve NCAIR1/N-ATLaS`, then
+  `NAtlas(base_url="http://host:8000/v1", model="NCAIR1/N-ATLaS")`, passing
+  `repetition_penalty=1.12` to `chat()` as the model card recommends. vLLM
+  handles many users at once, but the schema-enforced tool decisions and the
+  `--date` pin are `pynatlas serve` features: run `pynatlas bench --tasks
+  tool-calling` against a vLLM endpoint before relying on its tool calls.
+- `pynatlas serve` on an NVIDIA machine: install with
+  `CMAKE_ARGS="-DGGML_CUDA=on" pip install "pynatlas[server]"`. It serves one
+  request at a time, so it suits demos and small deployments.
 
 ## Command line
 
@@ -187,6 +236,7 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
 | FLEURS speech, WER % (lower is better) | 9.0 | 31.3 | 43.8 | 55.7 |
 | FLEURS speech ignoring tone marks, WER % | 9.0 | 31.3 | 37.3 | 28.8 |
 | Tool calling, held-out set, % correct | 100 | 90 | 80 | 80 |
+| Language detection, held-out text, % | 99.8 | 99.9 | 99.6 | 99.6 |
 
 - Text tasks use 100 items per language, so accuracy is roughly ±10 points.
   Speech uses 50 clips, tool calling 10 questions per language.
@@ -196,6 +246,9 @@ answer. Results for the 4-bit model on Apple Silicon, temperature 0:
   it. Plain prompting scores 21 of 40 on the same set and calls a tool for every
   question that needs none; this SDK scores 34 of 40 with one such false call.
   The Hausa, Igbo and Yoruba questions are not reviewed by native speakers.
+- Language detection runs offline, so it does not depend on the endpoint. Its
+  profile is built from the AfriXNLI dev split and scored on the test split;
+  it also scores 99.3% to 100% on FLEURS transcripts.
 - N-ATLAS was trained partly on open datasets, so some test items may have been
   seen in training.
 - The model's chat template writes today's date into every prompt, so replies
