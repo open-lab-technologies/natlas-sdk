@@ -60,7 +60,7 @@ def _chat(args: argparse.Namespace) -> None:
             print()
             return
         history: list[dict[str, str]] = []
-        print("Chatting with N-ATLAS. Ctrl-D to quit.", file=sys.stderr)
+        print("Chatting with N-ATLaS. Ctrl-D to quit.", file=sys.stderr)
         while True:
             try:
                 prompt = input("> ")
@@ -95,7 +95,7 @@ def _bench(args: argparse.Namespace) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(prog="pynatlas", description="Tools for building with N-ATLAS")
+    parser = argparse.ArgumentParser(prog="pynatlas", description="Tools for building with N-ATLaS")
     parser.add_argument("--base-url", help="OpenAI-compatible endpoint (default: $NATLAS_BASE_URL)")
     parser.add_argument("--model", help="Model name the endpoint expects (default: $NATLAS_MODEL "
                         "or n-atlas)")
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> None:
 
     sub.add_parser("config", help="Show the settings in effect, with the API key masked")
 
-    p = sub.add_parser("download", help="Download quantised N-ATLAS weights")
+    p = sub.add_parser("download", help="Download quantised N-ATLaS weights")
     p.add_argument("--quant", default=DEFAULT_QUANT, choices=QUANTS,
                    help="Q4_K_M or larger recommended; Q2_K and Q3_K_M lose noticeable quality")
 
@@ -134,7 +134,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--label", default="n-atlas", help="Name for this run in the report")
     p.add_argument("--out", default="bench-results", help="Directory for results")
 
-    p = sub.add_parser("transcribe", help="Speech to text with the N-ATLAS speech models")
+    p = sub.add_parser("transcribe", help="Speech to text with the N-ATLaS speech models")
     p.add_argument("audio")
     p.add_argument("--language", "-l", required=True)
 

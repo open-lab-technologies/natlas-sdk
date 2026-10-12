@@ -1,6 +1,6 @@
-"""Translation between OpenAI tool calling and the N-ATLAS (Llama-3.1) format.
+"""Translation between OpenAI tool calling and the N-ATLaS (Llama-3.1) format.
 
-N-ATLAS calls a tool by replying `{"name": ..., "parameters": {...}}`, one call
+N-ATLaS calls a tool by replying `{"name": ..., "parameters": {...}}`, one call
 per turn. Left to itself it wraps that in code fences and calls a tool for
 almost every request, invented ones included. So every tool decision is
 generated under a JSON schema listing only the real tools; in "auto" mode the
@@ -69,7 +69,7 @@ def parse_call(text: str) -> tuple[str, dict[str, Any]] | None:
 
 
 def to_template_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """OpenAI messages in the shape the N-ATLAS chat template expects.
+    """OpenAI messages in the shape the N-ATLaS chat template expects.
 
     The template takes one tool call per assistant message with decoded
     arguments, so a message with several calls becomes several messages.

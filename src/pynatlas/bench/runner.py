@@ -1,4 +1,4 @@
-"""Run benchmark tasks against any N-ATLAS endpoint and write per-item results."""
+"""Run benchmark tasks against any N-ATLaS endpoint and write per-item results."""
 
 from __future__ import annotations
 

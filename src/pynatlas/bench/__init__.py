@@ -1,4 +1,4 @@
-"""Reproducible N-ATLAS evaluation on public Nigerian-language benchmarks."""
+"""Reproducible N-ATLaS evaluation on public Nigerian-language benchmarks."""
 
 from .runner import TASKS, run
 

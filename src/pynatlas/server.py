@@ -1,6 +1,6 @@
 """OpenAI-compatible HTTP server in front of an `Engine` and, optionally, a `Transcriber`.
 
-Any OpenAI client can point at it by changing the base URL. The N-ATLAS system
+Any OpenAI client can point at it by changing the base URL. The N-ATLaS system
 prompt and sampling settings apply when a request does not set its own, so
 drop-in clients get the behaviour the model was tuned for.
 """
@@ -58,7 +58,7 @@ class ChatMessage(BaseModel):
         for part in value:
             if part.get("type") != "text":
                 raise ValueError(
-                    f"Unsupported content part {part.get('type')!r}; N-ATLAS is text-only")
+                    f"Unsupported content part {part.get('type')!r}; N-ATLaS is text-only")
             parts.append(part.get("text", ""))
         return "\n".join(parts)
 
@@ -216,7 +216,7 @@ def create_app(
     inject_system_prompt: bool = True,
     api_key: str | None = None,
 ) -> FastAPI:
-    app = FastAPI(title="N-ATLAS", version=__version__)
+    app = FastAPI(title="N-ATLaS", version=__version__)
 
     @app.exception_handler(HTTPException)
     async def http_error(_: Request, exc: HTTPException) -> JSONResponse:
@@ -357,7 +357,7 @@ def create_app(
         if asr is None:
             raise HTTPException(501, "Speech recognition is off. Start the server with --asr.")
         # The OpenAI SDK sends `model` but `language` is optional there, so the
-        # language can also come from naming one of the N-ATLAS speech models.
+        # language can also come from naming one of the N-ATLaS speech models.
         if language is None and model:
             language = next((l.code for l in LANGUAGES.values() if l.asr_model == model), None)
         if language is None:

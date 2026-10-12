@@ -1,4 +1,4 @@
-"""Finding and downloading quantised N-ATLAS weights."""
+"""Finding and downloading quantised N-ATLaS weights."""
 
 from __future__ import annotations
 

@@ -1,7 +1,7 @@
-"""Clients for any OpenAI-compatible endpoint serving N-ATLAS.
+"""Clients for any OpenAI-compatible endpoint serving N-ATLaS.
 
 Works against `pynatlas serve`, vLLM, llama.cpp's server, Ollama or a hosted
-N-ATLAS API: anything that speaks /v1/chat/completions. Requests carry only
+N-ATLaS API: anything that speaks /v1/chat/completions. Requests carry only
 standard OpenAI fields unless the caller adds others.
 """
 
@@ -497,7 +497,7 @@ class NAtlas(_Base):
         return self.chat(self._translate_prompt(text, to, source), **extra).text
 
     def transcribe(self, audio: Audio, *, language: str, model: str | None = None) -> str:
-        """Speech to text with the N-ATLAS speech model for `language`.
+        """Speech to text with the N-ATLaS speech model for `language`.
 
         `audio` is a file path or the file's bytes. Needs an endpoint with
         /v1/audio/transcriptions, such as `pynatlas serve --asr`.

@@ -1,4 +1,4 @@
-"""Exceptions raised by the N-ATLAS clients. All derive from `NAtlasError`."""
+"""Exceptions raised by the N-ATLaS clients. All derive from `NAtlasError`."""
 
 from __future__ import annotations
 
