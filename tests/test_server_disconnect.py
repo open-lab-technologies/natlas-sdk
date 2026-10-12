@@ -8,8 +8,8 @@ import httpx
 import pytest
 
 uvicorn = pytest.importorskip("uvicorn")
-from natlas.engine import Chunk
-from natlas.server import create_app
+from pynatlas.engine import Chunk
+from pynatlas.server import create_app
 
 
 class LockingEngine:

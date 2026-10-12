@@ -1,0 +1,22 @@
+pynatlas
+Copyright the pynatlas authors. Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This package's code is Apache-2.0. The N-ATLaS language model and the NCAIR1
+speech models it downloads and serves are not: they are released by Awarri
+Technologies and the Federal Ministry of Communications, Innovation and Digital
+Economy under the N-ATLaS Open-Source Research and Innovation License, published
+on https://huggingface.co/NCAIR1/N-ATLaS. Anyone deploying them through this
+package must follow those terms, which include:
+
+- Attribution in all public use:
+  "N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation
+  and Digital Economy, and powered by Awarri Technologies."
+- A cap of 1,000 active end-users in any rolling 30-day period. Above that, a
+  commercial licence from Awarri Technologies is required.
+- Derivative works released under the same terms, and renamed models carrying
+  the suffix "Powered by Awarri".
+- No surveillance, discriminatory profiling, disinformation, impersonation,
+  fraud, or military use.
+
+The quantised GGUF weights fetched by `pynatlas download` are a community
+conversion by QuantFactory of NCAIR1/N-ATLaS and carry the same terms.

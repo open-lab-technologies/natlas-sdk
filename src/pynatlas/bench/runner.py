@@ -10,14 +10,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from ..client import NAtlas
 from ..errors import NAtlasError
 from ..types import ToolCall
 from . import data, scoring
 
-log = logging.getLogger("natlas.bench")
+log = logging.getLogger("pynatlas.bench")
 
 
 Metric = Literal["accuracy", "chrf", "wer", "tool-calls"]
@@ -71,8 +71,8 @@ def _ask(client: NAtlas, task: Task, item: data.Item, lang: str) -> tuple[str, T
     return client.chat(item.prompt, temperature=0.0, max_tokens=task.max_tokens).text, None
 
 
-def _row(task: Task, item: data.Item, reply: str, call: ToolCall | None) -> dict:
-    row: dict = {"id": item.id, "reply": reply}
+def _row(task: Task, item: data.Item, reply: str, call: ToolCall | None) -> dict[str, Any]:
+    row: dict[str, Any] = {"id": item.id, "reply": reply}
     if task.metric == "accuracy":
         parsed = task.parse(reply) if task.parse else reply
         row.update(gold=item.gold, parsed=parsed, correct=task.matches(parsed, item.gold))
@@ -88,7 +88,8 @@ def _row(task: Task, item: data.Item, reply: str, call: ToolCall | None) -> dict
     return row
 
 
-def _score(task: Task, rows: list[dict], replies: list[str], refs: list[str]) -> dict:
+def _score(task: Task, rows: list[dict[str, Any]], replies: list[str],
+           refs: list[str]) -> dict[str, Any]:
     if task.metric == "accuracy":
         result = {"score": round(100 * sum(r["correct"] for r in rows) / len(rows), 1),
                   "unparsed": sum(r["parsed"] is None for r in rows)}
@@ -115,13 +116,13 @@ def run(
     seed: int = 0,
     label: str = "n-atlas",
     progress: Callable[[str, str, int, int], None] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Run `tasks` and write results to `out_dir`.
 
     `progress` is called with (task, language, items done, items total).
     """
     out_dir.mkdir(parents=True, exist_ok=True)
-    summary: dict = {
+    summary: dict[str, Any] = {
         "label": label,
         "endpoint": client.base_url,
         "started": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -161,7 +162,7 @@ def run(
     return summary
 
 
-def to_markdown(summary: dict) -> str:
+def to_markdown(summary: dict[str, Any]) -> str:
     lines = [
         f"# {summary['label']}",
         "",

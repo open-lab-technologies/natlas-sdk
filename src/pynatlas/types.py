@@ -71,3 +71,15 @@ class ChatResponse:
 
     def __str__(self) -> str:
         return self.text
+
+
+@dataclass(frozen=True)
+class VoiceReply:
+    """What `voice_chat` heard, and the model's reply to it."""
+
+    transcript: str
+    language: str
+    reply: ChatResponse
+
+    def __str__(self) -> str:
+        return self.reply.text

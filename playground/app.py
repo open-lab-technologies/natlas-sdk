@@ -12,8 +12,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from natlas import LANGUAGES, NAtlas, NAtlasError
-from natlas.defaults import SYSTEM_PROMPT
+from pynatlas import LANGUAGES, NAtlas, NAtlasError
+from pynatlas.defaults import ATTRIBUTION, SYSTEM_PROMPT
 
 st.set_page_config(page_title="N-ATLAS Playground", layout="wide")
 
@@ -26,6 +26,7 @@ with st.sidebar:
     temperature = st.slider("Temperature", 0.0, 1.0, 0.1, 0.05)
     max_tokens = st.slider("Max tokens", 32, 2048, 512, 32)
     system = st.text_area("System prompt", SYSTEM_PROMPT, height=120)
+    st.caption(ATTRIBUTION)
 
 
 @st.cache_resource
@@ -74,7 +75,7 @@ with translate_tab:
                 st.error(str(e))
 
 with voice_tab:
-    st.caption("Needs a server started with `natlas serve --asr`.")
+    st.caption("Needs a server started with `pynatlas serve --asr`.")
     lang = st.selectbox("Spoken language", list(names), format_func=names.get, key="asr")
     audio = st.audio_input("Record a question")
     upload = st.file_uploader("or upload a voice note", type=["wav", "mp3", "ogg", "opus", "m4a"])
@@ -95,7 +96,7 @@ with bench_tab:
     root = Path(st.text_input("Results directory", "bench-results"))
     runs = sorted(p.parent for p in root.glob("*/summary.json"))
     if not runs:
-        st.info("No runs yet. Try `natlas bench -n 20`.")
+        st.info("No runs yet. Try `pynatlas bench -n 20`.")
     else:
         run = st.selectbox("Run", runs, format_func=lambda p: p.name)
         summary = json.loads((run / "summary.json").read_text())

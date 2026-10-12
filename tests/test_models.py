@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from natlas import models
+from pynatlas import models
 
 CONTENT = b"GGUF" + bytes(range(256)) * 40
 FILENAME = models.gguf_filename("Q4_K_M")
@@ -102,7 +102,7 @@ def test_progress_callback_reports_bytes(tmp_path):
 
 
 def test_missing_extra_names_the_install_command():
-    from natlas._extras import MissingExtraError, require
+    from pynatlas._extras import MissingExtraError, require
 
-    with pytest.raises(MissingExtraError, match=r"pip install 'natlas\[server\]'"):
+    with pytest.raises(MissingExtraError, match=r"pip install 'pynatlas\[server\]'"):
         require("a_module_that_does_not_exist", "server")

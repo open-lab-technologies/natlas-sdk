@@ -1,4 +1,4 @@
-"""Inference backends for `natlas serve`.
+"""Inference backends for `pynatlas serve`.
 
 The server talks to any object that satisfies `Engine`. `LlamaCppEngine` runs
 GGUF builds of N-ATLAS through llama.cpp; other backends only need to
@@ -69,7 +69,7 @@ class LlamaCppEngine:
 
         path = Path(model_path).expanduser()
         if not path.exists():
-            raise FileNotFoundError(f"Model file not found: {path}. Run `natlas download` first.")
+            raise FileNotFoundError(f"Model file not found: {path}. Run `pynatlas download` first.")
         self.name = path.name
         self.date = date
         self.llm = llama_cpp.Llama(
@@ -94,7 +94,7 @@ class LlamaCppEngine:
         message, where the template puts them by default, the model calls a tool
         for almost every request.
         """
-        return self._template.render(
+        prompt: str = self._template.render(
             messages=messages,
             tools=[t.get("function", t) for t in tools] if tools else None,
             tools_in_user_message=False,
@@ -102,6 +102,7 @@ class LlamaCppEngine:
             bos_token="",  # llama.cpp adds BOS itself when tokenising
             date_string=self.date or datetime.now().astimezone().strftime("%d %b %Y"),
         )
+        return prompt
 
     def _grammar(self, schema: dict[str, Any]) -> Any:
         key = json.dumps(schema, sort_keys=True)

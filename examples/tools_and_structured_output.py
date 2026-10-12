@@ -1,6 +1,6 @@
 """Tool calling and structured output.
 
-    natlas serve
+    pynatlas serve
     python examples/tools_and_structured_output.py
 """
 
@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from natlas import NAtlas
+from pynatlas import NAtlas
 
 
 def get_market_price(commodity: str, market: str) -> dict:

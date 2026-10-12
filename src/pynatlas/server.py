@@ -13,7 +13,7 @@ import json
 import threading
 import time
 import uuid
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from typing import Any, Literal
 
 from ._extras import require
@@ -22,7 +22,7 @@ require("fastapi", "server")
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, field_validator
 
 from . import __version__, defaults
@@ -174,7 +174,7 @@ class _Generation:
         self._queue: asyncio.Queue[Any] = asyncio.Queue()
         self._loop = asyncio.get_running_loop()
         self._stopped = threading.Event()
-        threading.Thread(target=self._work, name="natlas-generate", daemon=True).start()
+        threading.Thread(target=self._work, name="pynatlas-generate", daemon=True).start()
 
     def _put(self, item: Any) -> None:
         try:
@@ -203,7 +203,8 @@ class _Generation:
             return None
         if isinstance(item, Exception):
             raise item
-        return item
+        chunk: Chunk = item
+        return chunk
 
     def stop(self) -> None:
         self._stopped.set()
@@ -232,7 +233,8 @@ def create_app(
         return _error(400, f"{where}: {first.get('msg')}" if where else first.get("msg", ""))
 
     @app.middleware("http")
-    async def require_key(request: Request, call_next):
+    async def require_key(request: Request,
+                          call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         # /health stays open so load balancers and scripts can probe the server.
         if api_key and request.url.path != "/health":
             supplied = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
@@ -278,7 +280,8 @@ def create_app(
 
     @app.get("/health")
     def health() -> dict[str, Any]:
-        return {"status": "ok", "model": engine.name, "asr": asr is not None}
+        return {"status": "ok", "model": engine.name, "asr": asr is not None,
+                "attribution": defaults.ATTRIBUTION}
 
     @app.get("/v1/models")
     def models() -> dict[str, Any]:
@@ -305,8 +308,8 @@ def create_app(
         except (ValueError, KeyError) as e:  # reply was cut off by max_tokens
             raise HTTPException(400, f"Tool call was incomplete; raise max_tokens ({e})") from e
 
-    @app.post("/v1/chat/completions")
-    async def chat(req: ChatRequest):
+    @app.post("/v1/chat/completions", response_model=None)
+    async def chat(req: ChatRequest) -> Response | dict[str, Any]:
         messages = prepare(req)
         params: dict[str, Any] = {
             "temperature": req.temperature,
@@ -344,13 +347,13 @@ def create_app(
         return _completion(completion_id, created, {"role": "assistant", "content": text}, finish,
                            engine.count_prompt_tokens(messages), engine.count_tokens(text))
 
-    @app.post("/v1/audio/transcriptions")
+    @app.post("/v1/audio/transcriptions", response_model=None)
     def transcriptions(
         file: UploadFile = File(...),
         language: str | None = Form(None),
         model: str | None = Form(None),
         response_format: str = Form("json"),
-    ):
+    ) -> Response:
         if asr is None:
             raise HTTPException(501, "Speech recognition is off. Start the server with --asr.")
         # The OpenAI SDK sends `model` but `language` is optional there, so the

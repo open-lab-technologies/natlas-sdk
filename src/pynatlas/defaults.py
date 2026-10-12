@@ -10,6 +10,10 @@ SYSTEM_PROMPT = (
 )
 TEMPERATURE = 0.1
 MAX_TOKENS = 512
-# Not part of the OpenAI API, so the client never sends it unasked. `natlas serve`
+# Not part of the OpenAI API, so the client never sends it unasked. `pynatlas serve`
 # applies it by default; with vLLM, pass repetition_penalty=1.12 to chat() yourself.
 REPETITION_PENALTY = 1.12
+
+# Required by the N-ATLaS licence in all public use.
+ATTRIBUTION = ("N-ATLaS is an initiative of the Federal Ministry of Communications, "
+               "Innovation and Digital Economy, and powered by Awarri Technologies.")

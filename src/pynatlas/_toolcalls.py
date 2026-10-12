@@ -25,7 +25,8 @@ class ToolChoiceError(ValueError):
 
 
 def _function(tool: dict[str, Any]) -> dict[str, Any]:
-    return tool.get("function", tool)
+    function: dict[str, Any] = tool.get("function", tool)
+    return function
 
 
 def call_schema(tools: list[dict[str, Any]], tool_choice: Any) -> tuple[dict[str, Any], bool]:

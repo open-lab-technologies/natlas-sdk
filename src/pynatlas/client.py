@@ -1,6 +1,6 @@
 """Clients for any OpenAI-compatible endpoint serving N-ATLAS.
 
-Works against `natlas serve`, vLLM, llama.cpp's server, Ollama or a hosted
+Works against `pynatlas serve`, vLLM, llama.cpp's server, Ollama or a hosted
 N-ATLAS API: anything that speaks /v1/chat/completions. Requests carry only
 standard OpenAI fields unless the caller adds others.
 """
@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 import time
 from collections.abc import AsyncIterator, Callable, Iterator, Sequence
 from pathlib import Path
@@ -21,16 +22,17 @@ import httpx
 from . import defaults
 from .errors import (
     APIConnectionError,
+    APIStatusError,
     APITimeoutError,
     NAtlasError,
     StructuredOutputError,
     ToolLoopError,
     status_error,
 )
-from .languages import get_language
+from .languages import detect_language, get_language
 from .settings import Settings, validate_base_url
 from .tools import ToolSpec, to_tool
-from .types import ChatResponse, ToolCall, Usage
+from .types import ChatResponse, ToolCall, Usage, VoiceReply
 
 RETRYABLE_STATUS = frozenset({408, 409, 429, 500, 502, 503, 504})
 
@@ -39,7 +41,35 @@ Prompt = str | Sequence[Message]
 Audio = str | Path | bytes
 Decoder = Callable[[str], Any]
 
-log = logging.getLogger("natlas")
+log = logging.getLogger("pynatlas")
+
+
+_FENCED = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
+
+
+def _decode(decoder: Decoder, text: str) -> Any:
+    """Decode a structured reply, also trying the JSON inside code fences or
+    surrounding prose, which models that are not held to a schema often add."""
+    candidates = [text, *(m.group(1).strip() for m in _FENCED.finditer(text))]
+    start, end = text.find("{"), text.rfind("}")
+    if 0 <= start < end:
+        candidates.append(text[start:end + 1])
+    error: ValueError | None = None
+    for candidate in candidates:
+        try:
+            return decoder(candidate)
+        except ValueError as e:  # json and Pydantic validation errors both subclass it
+            error = error or e
+    raise StructuredOutputError(f"Reply does not match the requested format: {error}", text)
+
+
+def _with_correction(body: dict[str, Any], error: StructuredOutputError) -> dict[str, Any]:
+    return {**body, "messages": [
+        *body["messages"],
+        {"role": "assistant", "content": error.text},
+        {"role": "user", "content": f"That reply did not match the required format ({error}). "
+                                    "Reply again with only the JSON."},
+    ]}
 
 
 def _tool_call(data: dict[str, Any]) -> ToolCall:
@@ -92,7 +122,7 @@ class _Base:
         settings = settings or Settings.from_env()
         self.base_url = validate_base_url(base_url) if base_url else settings.base_url
         self.api_key = api_key or settings.api_key
-        # Servers name the model differently: "n-atlas" for `natlas serve`, the
+        # Servers name the model differently: "n-atlas" for `pynatlas serve`, the
         # Hugging Face id for vLLM, the tag you pulled for Ollama.
         self.model = model or settings.model
         self.system_prompt = system_prompt
@@ -154,7 +184,8 @@ class _Base:
         if isinstance(fmt, type) and hasattr(fmt, "model_json_schema"):
             wire = {"type": "json_schema", "json_schema": {
                 "name": fmt.__name__, "schema": fmt.model_json_schema(), "strict": True}}
-            return wire, fmt.model_validate_json
+            decode: Decoder = fmt.model_validate_json  # type: ignore[attr-defined]
+            return wire, decode
         if not isinstance(fmt, dict):
             raise TypeError("response_format must be a Pydantic model class or a dict")
         if fmt.get("type") == "text":
@@ -173,7 +204,39 @@ class _Base:
         )
 
     @staticmethod
-    def _audio_form(audio: Audio, language: str, model: str | None) -> tuple[dict, dict]:
+    def _summary_prompt(text: str, language: str | None, sentences: int) -> str:
+        lang = get_language(language or detect_language(text) or "en")
+        return (f"Summarise the following text in {lang.name}, in at most {sentences} "
+                f"sentences. Reply with the summary only.\n\n{text}")
+
+    @staticmethod
+    def _classify_request(text: str, labels: Sequence[str], instruction: str | None,
+                          ) -> tuple[str, dict[str, Any]]:
+        if len(set(labels)) < 2:
+            raise ValueError("classify needs at least two distinct labels")
+        prompt = (f"{instruction or 'Classify the following text.'} "
+                  f"Choose one label from: {', '.join(labels)}.\n\nText: {text}")
+        schema = {"type": "object", "properties": {"label": {"enum": list(labels)}},
+                  "required": ["label"]}
+        return prompt, schema
+
+    @staticmethod
+    def _label(reply: ChatResponse, labels: Sequence[str]) -> str:
+        label = (reply.parsed or {}).get("label")
+        if label not in labels:  # possible only where the endpoint does not enforce schemas
+            raise StructuredOutputError(f"Reply chose {label!r}, not one of {list(labels)}",
+                                        reply.text)
+        return str(label)
+
+    @staticmethod
+    def _voice_system(language: str) -> str:
+        name = get_language(language).name
+        return (f"Reply in {name}, briefly and in plain words, because the reply may be "
+                "read aloud.")
+
+    @staticmethod
+    def _audio_form(audio: Audio, language: str, model: str | None,
+                    ) -> tuple[dict[str, str], dict[str, tuple[str, bytes]]]:
         lang = get_language(language)
         if isinstance(audio, (str, Path)):
             path = Path(audio)
@@ -195,11 +258,7 @@ class _Base:
             raise NAtlasError(f"Unexpected response shape: {data!r}") from e
         parsed = None
         if decoder and not calls:
-            try:
-                parsed = decoder(text)
-            except ValueError as e:  # json and Pydantic validation errors both subclass it
-                raise StructuredOutputError(
-                    f"Reply does not match the requested format: {e}", text) from e
+            parsed = _decode(decoder, text)
         return ChatResponse(
             text=text,
             model=data.get("model", model),
@@ -228,8 +287,11 @@ class _Base:
 
     @staticmethod
     def _raise_for_status(resp: httpx.Response) -> None:
-        if resp.is_success:
-            return
+        if not resp.is_success:
+            raise _Base._status_error(resp)
+
+    @staticmethod
+    def _status_error(resp: httpx.Response) -> APIStatusError:
         try:
             body = resp.json()
         except ValueError:
@@ -239,8 +301,8 @@ class _Base:
             err = body.get("error")
             server_message = err.get("message") if isinstance(err, dict) else err
             detail = server_message or body.get("detail") or body
-        raise status_error(resp.status_code,
-                           f"{resp.status_code} from {resp.request.url}: {detail}", body)
+        return status_error(resp.status_code,
+                            f"{resp.status_code} from {resp.request.url}: {detail}", body)
 
     def _retry_delay(self, attempt: int, resp: httpx.Response | None) -> float | None:
         """Seconds to wait before retrying, or None to stop."""
@@ -252,7 +314,7 @@ class _Base:
             retry_after = resp.headers.get("retry-after")
             if retry_after and retry_after.replace(".", "", 1).isdigit():
                 return min(float(retry_after), 60.0)
-        return min(0.5 * 2**attempt, 8.0) * (0.75 + random.random() / 2)
+        return min(0.5 * 2.0**attempt, 8.0) * (0.75 + random.random() / 2)
 
     @staticmethod
     def _connection_error(e: httpx.HTTPError, base_url: str) -> APIConnectionError:
@@ -326,6 +388,7 @@ class NAtlas(_Base):
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | dict[str, Any] | None = None,
         response_format: Any = None,
+        format_retries: int = 1,
         **extra: Any,
     ) -> ChatResponse:
         """Send a prompt, or a full message list, and return the reply.
@@ -334,7 +397,9 @@ class NAtlas(_Base):
         makes come back in `.tool_calls`. `tool_choice` is "auto", "none",
         "required" or a function name. `response_format` takes a Pydantic model
         class, a JSON schema, or an OpenAI `response_format` dict, and the decoded
-        reply comes back in `.parsed`.
+        reply comes back in `.parsed`. If a reply does not match, which can happen
+        only where the endpoint does not enforce schemas, the model is shown the
+        error and asked again up to `format_retries` times.
 
         Other keyword arguments go into the request body unchanged, for options a
         provider supports beyond the OpenAI API, such as `repetition_penalty` on vLLM.
@@ -343,8 +408,16 @@ class NAtlas(_Base):
             prompt, system=system, model=model, temperature=temperature,
             max_tokens=max_tokens, stream=False, extra=extra, tools=tools,
             tool_choice=tool_choice, response_format=response_format)
-        resp = self._request("POST", "/chat/completions", json=body)
-        return self._parse_chat(resp.json(), body["model"], decoder)
+        attempt = 0
+        while True:
+            resp = self._request("POST", "/chat/completions", json=body)
+            try:
+                return self._parse_chat(resp.json(), body["model"], decoder)
+            except StructuredOutputError as e:
+                if attempt >= format_retries:
+                    raise
+                attempt += 1
+                body = _with_correction(body, e)
 
     def run_tools(
         self,
@@ -405,7 +478,7 @@ class NAtlas(_Base):
                 resp.close()
                 delay = self._retry_delay(attempt, resp)
                 if delay is None:
-                    self._raise_for_status(resp)
+                    raise self._status_error(resp)
             time.sleep(delay)
             attempt += 1
         try:
@@ -427,11 +500,33 @@ class NAtlas(_Base):
         """Speech to text with the N-ATLAS speech model for `language`.
 
         `audio` is a file path or the file's bytes. Needs an endpoint with
-        /v1/audio/transcriptions, such as `natlas serve --asr`.
+        /v1/audio/transcriptions, such as `pynatlas serve --asr`.
         """
         data, files = self._audio_form(audio, language, model)
         resp = self._request("POST", "/audio/transcriptions", data=data, files=files)
-        return resp.json()["text"].strip()
+        return str(resp.json()["text"]).strip()
+
+    def summarize(self, text: str, *, language: str | None = None, sentences: int = 3,
+                  **extra: Any) -> str:
+        """Summarise `text`, by default in the language it is written in."""
+        extra.setdefault("temperature", 0.0)
+        return self.chat(self._summary_prompt(text, language, sentences), **extra).text
+
+    def classify(self, text: str, labels: Sequence[str], *, instruction: str | None = None,
+                 **extra: Any) -> str:
+        """One of `labels` for `text`. The label set is enforced on endpoints that
+        support schemas, so the reply cannot be a label you did not offer."""
+        prompt, schema = self._classify_request(text, labels, instruction)
+        extra.setdefault("temperature", 0.0)
+        return self._label(self.chat(prompt, response_format=schema, **extra), labels)
+
+    def voice_chat(self, audio: Audio, *, language: str, **chat_kwargs: Any) -> VoiceReply:
+        """Transcribe a voice note and answer it in the same language."""
+        heard = self.transcribe(audio, language=language)
+        if not heard:
+            raise NAtlasError("Nothing was heard in the audio")
+        chat_kwargs.setdefault("system", self._voice_system(language))
+        return VoiceReply(heard, get_language(language).code, self.chat(heard, **chat_kwargs))
 
     def models(self) -> list[str]:
         resp = self._request("GET", "/models")
@@ -499,14 +594,23 @@ class AsyncNAtlas(_Base):
         tools: Sequence[ToolSpec] | None = None,
         tool_choice: str | dict[str, Any] | None = None,
         response_format: Any = None,
+        format_retries: int = 1,
         **extra: Any,
     ) -> ChatResponse:
         body, decoder = self._chat_body(
             prompt, system=system, model=model, temperature=temperature,
             max_tokens=max_tokens, stream=False, extra=extra, tools=tools,
             tool_choice=tool_choice, response_format=response_format)
-        resp = await self._request("POST", "/chat/completions", json=body)
-        return self._parse_chat(resp.json(), body["model"], decoder)
+        attempt = 0
+        while True:
+            resp = await self._request("POST", "/chat/completions", json=body)
+            try:
+                return self._parse_chat(resp.json(), body["model"], decoder)
+            except StructuredOutputError as e:
+                if attempt >= format_retries:
+                    raise
+                attempt += 1
+                body = _with_correction(body, e)
 
     async def run_tools(
         self,
@@ -564,7 +668,7 @@ class AsyncNAtlas(_Base):
                 await resp.aclose()
                 delay = self._retry_delay(attempt, resp)
                 if delay is None:
-                    self._raise_for_status(resp)
+                    raise self._status_error(resp)
             await asyncio.sleep(delay)
             attempt += 1
         try:
@@ -584,7 +688,27 @@ class AsyncNAtlas(_Base):
     async def transcribe(self, audio: Audio, *, language: str, model: str | None = None) -> str:
         data, files = self._audio_form(audio, language, model)
         resp = await self._request("POST", "/audio/transcriptions", data=data, files=files)
-        return resp.json()["text"].strip()
+        return str(resp.json()["text"]).strip()
+
+    async def summarize(self, text: str, *, language: str | None = None, sentences: int = 3,
+                        **extra: Any) -> str:
+        extra.setdefault("temperature", 0.0)
+        return (await self.chat(self._summary_prompt(text, language, sentences), **extra)).text
+
+    async def classify(self, text: str, labels: Sequence[str], *,
+                       instruction: str | None = None, **extra: Any) -> str:
+        prompt, schema = self._classify_request(text, labels, instruction)
+        extra.setdefault("temperature", 0.0)
+        return self._label(await self.chat(prompt, response_format=schema, **extra), labels)
+
+    async def voice_chat(self, audio: Audio, *, language: str,
+                         **chat_kwargs: Any) -> VoiceReply:
+        heard = await self.transcribe(audio, language=language)
+        if not heard:
+            raise NAtlasError("Nothing was heard in the audio")
+        chat_kwargs.setdefault("system", self._voice_system(language))
+        reply = await self.chat(heard, **chat_kwargs)
+        return VoiceReply(heard, get_language(language).code, reply)
 
     async def models(self) -> list[str]:
         resp = await self._request("GET", "/models")

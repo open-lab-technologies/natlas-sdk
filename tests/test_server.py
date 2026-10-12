@@ -5,9 +5,9 @@ import pytest
 pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient
 
-from natlas.defaults import SYSTEM_PROMPT as DEFAULT_SYSTEM_PROMPT
-from natlas.engine import Chunk
-from natlas.server import create_app
+from pynatlas.defaults import SYSTEM_PROMPT as DEFAULT_SYSTEM_PROMPT
+from pynatlas.engine import Chunk
+from pynatlas.server import create_app
 
 
 class FakeEngine:

@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from natlas import (
+from pynatlas import (
     APIConnectionError,
     APITimeoutError,
     AsyncNAtlas,
@@ -16,7 +16,7 @@ from natlas import (
     RateLimitError,
     get_language,
 )
-from natlas.defaults import SYSTEM_PROMPT
+from pynatlas.defaults import SYSTEM_PROMPT
 
 BASE = "http://test/v1"
 CHAT = f"{BASE}/chat/completions"

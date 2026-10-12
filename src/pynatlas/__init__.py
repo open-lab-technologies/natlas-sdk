@@ -18,10 +18,10 @@ from .errors import (
     StructuredOutputError,
     ToolLoopError,
 )
-from .languages import LANGUAGES, Language, get_language
+from .languages import LANGUAGES, Language, detect_language, get_language
 from .settings import ConfigError, Settings
 from .tools import function_tool
-from .types import ChatResponse, ToolCall, Usage
+from .types import ChatResponse, ToolCall, Usage, VoiceReply
 
 __version__ = "0.1.0"
 
@@ -46,6 +46,8 @@ __all__ = [
     "ToolCall",
     "ToolLoopError",
     "Usage",
+    "VoiceReply",
+    "detect_language",
     "function_tool",
     "get_language",
 ]

@@ -21,7 +21,7 @@ WHISPER_WINDOW_SECONDS = 30
 
 
 class Transcriber(Protocol):
-    """What `natlas serve` needs from a speech backend."""
+    """What `pynatlas serve` needs from a speech backend."""
 
     def transcribe(self, data: bytes, language: str) -> str:
         """Audio file bytes in any supported format to text, for a language code."""
@@ -113,7 +113,7 @@ class SpeechRecogniser:
             return_timestamps=False,
             generate_kwargs=generate_kwargs,
         )
-        return result["text"].strip()
+        return str(result["text"]).strip()
 
 
 def looks_looped(text: str, max_repeats: int = 3, max_n: int = 4) -> bool:

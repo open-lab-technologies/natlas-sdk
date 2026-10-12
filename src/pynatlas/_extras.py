@@ -15,5 +15,5 @@ def require(module: str, extra: str) -> ModuleType:
         return importlib.import_module(module)
     except ImportError as e:
         raise MissingExtraError(
-            f"{module} is needed for this feature. Install it with: pip install 'natlas[{extra}]'"
+            f"{module} is needed for this feature. Install it with: pip install 'pynatlas[{extra}]'"
         ) from e

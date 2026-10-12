@@ -1,16 +1,22 @@
 [project]
-name = "natlas"
+name = "pynatlas"
 dynamic = ["version"]
 description = "Python SDK, OpenAI-compatible server and benchmark kit for N-ATLAS, Nigeria's open multilingual LLM"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Nazeh Abel" }]
 keywords = ["n-atlas", "llm", "nigeria", "hausa", "igbo", "yoruba", "speech-recognition"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Natural Language :: English",
@@ -48,6 +54,7 @@ dev = [
     "pytest-asyncio>=0.24",
     "respx>=0.21",
     "ruff>=0.6",
+    "mypy>=1.11",
     "openai>=1.40",
     "fastapi>=0.115",
     "uvicorn>=0.30",
@@ -66,22 +73,23 @@ playground = [
 [project.urls]
 Repository = "https://github.com/Nazehs/natlas-sdk"
 Issues = "https://github.com/Nazehs/natlas-sdk/issues"
+Changelog = "https://github.com/Nazehs/natlas-sdk/blob/main/CHANGELOG.md"
 
 [project.scripts]
-natlas = "natlas.cli:main"
+pynatlas = "pynatlas.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/natlas/__init__.py"
+path = "src/pynatlas/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/natlas"]
+packages = ["src/pynatlas"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src", "tests", "README.md", "LICENSE"]
+include = ["src", "tests", "README.md", "LICENSE", "NOTICE", "CHANGELOG.md"]
 
 [tool.ruff]
 line-length = 100
@@ -92,6 +100,17 @@ extend-select = ["E501"]
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI declares request parameters with File()/Form() defaults.
 extend-immutable-calls = ["fastapi.File", "fastapi.Form"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["pynatlas"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# Optional heavy dependencies without type information.
+module = ["llama_cpp.*", "soxr", "soundfile", "transformers", "torch", "sacrebleu.*", "jiwer"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

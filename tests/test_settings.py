@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from natlas import NAtlas
-from natlas.cli import main
-from natlas.settings import ConfigError, Settings
+from pynatlas import NAtlas
+from pynatlas.cli import main
+from pynatlas.settings import ConfigError, Settings
 
 
 def test_defaults_when_nothing_is_set():
