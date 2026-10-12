@@ -1,0 +1,74 @@
+{
+  "en": {
+    "afrixnli_test": {
+      "n": 800,
+      "accuracy": 99.8
+    },
+    "afrixnli_test_without_tone_marks": {
+      "n": 800,
+      "accuracy": 99.8
+    },
+    "afrixnli_test_five_words_or_fewer": {
+      "n": 66,
+      "accuracy": 98.5
+    },
+    "fleurs_transcripts": {
+      "n": 150,
+      "accuracy": 100.0
+    }
+  },
+  "ha": {
+    "afrixnli_test": {
+      "n": 800,
+      "accuracy": 99.9
+    },
+    "afrixnli_test_without_tone_marks": {
+      "n": 800,
+      "accuracy": 99.9
+    },
+    "afrixnli_test_five_words_or_fewer": {
+      "n": 56,
+      "accuracy": 98.2
+    },
+    "fleurs_transcripts": {
+      "n": 145,
+      "accuracy": 100.0
+    }
+  },
+  "ig": {
+    "afrixnli_test": {
+      "n": 800,
+      "accuracy": 99.6
+    },
+    "afrixnli_test_without_tone_marks": {
+      "n": 800,
+      "accuracy": 99.5
+    },
+    "afrixnli_test_five_words_or_fewer": {
+      "n": 53,
+      "accuracy": 96.2
+    },
+    "fleurs_transcripts": {
+      "n": 150,
+      "accuracy": 100.0
+    }
+  },
+  "yo": {
+    "afrixnli_test": {
+      "n": 800,
+      "accuracy": 99.6
+    },
+    "afrixnli_test_without_tone_marks": {
+      "n": 800,
+      "accuracy": 99.5
+    },
+    "afrixnli_test_five_words_or_fewer": {
+      "n": 43,
+      "accuracy": 97.7
+    },
+    "fleurs_transcripts": {
+      "n": 147,
+      "accuracy": 99.3
+    }
+  }
+}
