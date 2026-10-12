@@ -19,7 +19,7 @@ pip install pynatlas
 | `pynatlas[bench]`  | `pynatlas bench`: benchmarks for any endpoint                   | 51 MB  |
 
 Python 3.10 or newer. `import pynatlas` loads only httpx. Release notes are in
-the [changelog](https://github.com/Nazehs/natlas-sdk/blob/main/CHANGELOG.md).
+the [changelog](https://github.com/open-lab-technologies/natlas-sdk/blob/main/CHANGELOG.md).
 
 ## Quick start
 
@@ -247,7 +247,7 @@ Datasets: [IrokoBench](https://huggingface.co/collections/masakhane/irokobench)
 (Apache-2.0), [MAFAND-MT](https://github.com/masakhane-io/lafand-mt) (GPL-3.0)
 and [FLEURS](https://huggingface.co/datasets/google/fleurs) (CC-BY-4.0), all
 downloaded at run time. Full replies are in
-[bench-results](https://github.com/Nazehs/natlas-sdk/tree/main/bench-results/).
+[bench-results](https://github.com/open-lab-technologies/natlas-sdk/tree/main/bench-results/).
 
 ## Known limitations
 
@@ -287,7 +287,7 @@ The code is Apache-2.0, maintained by Open Lab Technologies. The N-ATLaS and
 speech models it runs are under the N-ATLaS Open-Source Research and Innovation
 License, which requires attribution in all public use and caps deployments at
 1,000 active end-users a month without a commercial licence. Read the
-[NOTICE](https://github.com/Nazehs/natlas-sdk/blob/main/NOTICE) before
+[NOTICE](https://github.com/open-lab-technologies/natlas-sdk/blob/main/NOTICE) before
 deploying.
 
 N-ATLaS is an initiative of the Federal Ministry of Communications, Innovation
